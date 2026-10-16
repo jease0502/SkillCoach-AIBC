@@ -1,0 +1,151 @@
+1
+00:00:00,800 --> 00:00:02,787
+New hires learn on real customers.
+
+2
+00:00:02,787 --> 00:00:07,403
+Role-play needs senior staff nobody can spare, and one wrong promise can cost a
+
+3
+00:00:07,403 --> 00:00:08,280
+company dearly.
+
+4
+00:00:09,985 --> 00:00:13,731
+SkillCoach turns a company's own knowledge into realistic practice
+
+5
+00:00:13,731 --> 00:00:16,625
+conversations, powered by Gemini 4 on Google Cloud.
+
+6
+00:00:17,243 --> 00:00:20,643
+An admin uploads product brochures and policies.
+
+7
+00:00:22,184 --> 00:00:27,624
+Gemini 4 reads those documents and proposes realistic customer types.
+
+8
+00:00:30,488 --> 00:00:35,528
+Every objection and hidden need links back to the passage it came from.
+
+9
+00:00:36,109 --> 00:00:38,667
+A trainer checks the sources and approves.
+
+10
+00:00:38,667 --> 00:00:41,469
+Only approved customers are used for practice.
+
+11
+00:00:43,791 --> 00:00:46,537
+Now a new insurance advisor meets Mr.
+
+12
+00:00:46,537 --> 00:00:48,319
+Tan, a cautious retiree.
+
+13
+00:00:48,319 --> 00:00:50,471
+His first question is a trap.
+
+14
+00:00:53,544 --> 00:00:55,289
+Here's the costly mistake:
+
+15
+00:00:55,289 --> 00:00:57,301
+promising a guaranteed return.
+
+16
+00:00:57,301 --> 00:01:02,669
+Before it reaches the customer, the Compliance Guard stops it, quotes the words,
+
+17
+00:01:02,669 --> 00:01:03,944
+and names the rule.
+
+18
+00:01:04,295 --> 00:01:06,483
+Send it anyway, and trust drops.
+
+19
+00:01:06,483 --> 00:01:08,535
+The coach suggests a way back.
+
+20
+00:01:14,482 --> 00:01:16,962
+Pressure selling is flagged inline too.
+
+21
+00:01:19,986 --> 00:01:21,610
+An honest answer works better.
+
+22
+00:01:21,610 --> 00:01:26,426
+The customer only states facts from the company's documents, with sources on every reply.
+
+23
+00:01:35,493 --> 00:01:38,530
+Each turn runs a pipeline of Gemini agents:
+
+24
+00:01:38,530 --> 00:01:43,333
+compliance judge, customer, grounding check, trust model, and coach.
+
+25
+00:01:45,443 --> 00:01:47,523
+Now, the report.
+
+26
+00:01:51,228 --> 00:01:54,865
+One forbidden promise fails the session, however good the rest was.
+
+27
+00:01:54,865 --> 00:01:57,308
+The overall score cannot go above fifty-nine.
+
+28
+00:01:57,668 --> 00:02:03,482
+Every score quotes the trainee's own words, verified against the transcript.
+
+29
+00:02:03,482 --> 00:02:05,548
+No evidence, no high score.
+
+30
+00:02:07,636 --> 00:02:10,966
+Managers see aggregates, never transcripts:
+
+31
+00:02:10,966 --> 00:02:15,148
+skill gaps, broken rules, and who is ready to go live.
+
+32
+00:02:15,148 --> 00:02:17,316
+Sample team data is labeled.
+
+33
+00:02:19,387 --> 00:02:21,278
+Seven Gemini agent roles:
+
+34
+00:02:21,278 --> 00:02:27,634
+Gemini 4 Argon for the customer, builder and report, Flash-Lite for the fast checks.
+
+35
+00:02:27,634 --> 00:02:29,071
+The future of work:
+
+36
+00:02:29,071 --> 00:02:32,627
+a tireless practice partner for every new hire.
+
+37
+00:02:34,227 --> 00:02:35,001
+SkillCoach.
+
+38
+00:02:35,001 --> 00:02:38,027
+Practice the conversation before it counts.

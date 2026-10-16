@@ -245,7 +245,7 @@ Trainer clicks "Generate from documents"
   4. Review     trainer sees cards with citation chips; approves, edits or deletes
 ```
 
-The fast tier (`GEMINI_FAST_MODEL`, `gemini-4-argon` with thinking `low`, fallback `gemini-3.8-flash`, on the `global` endpoint) is used. PENDING re-measure on `gemini-4-argon`. Measured on `gemini-3.8-flash` (live, 2026-10-16, nothing saved): 3 personas from documents in 13.5 s, a scenario in 11.4 s, a persona from a brief in 9.1 s, with every returned citation verified against the source text (37 of 37). Only serious problems (no compliance rules extracted when rule sources exist, or fewer than 2 rubric items) trigger a retry.
+The fast tier (`GEMINI_FAST_MODEL`, `gemini-4-argon` with thinking `low`, fallback `gemini-3.8-flash`, on the `global` endpoint) is used. Measured on live `gemini-4-argon` (2026-10-16, two runs, nothing saved): 3 personas from documents in 36-40 s, a scenario in 26-30 s, a persona from a brief in 18-29 s, with every returned citation verified against the source text (106 of 106). That is about 3x slower than `gemini-3.8-flash` (13 s / 11 s / 9 s), with richer, more heavily cited drafts. Only serious problems (no compliance rules extracted when rule sources exist, or fewer than 2 rubric items) trigger a retry.
 
 ### 3.2 Chunk formatting in the prompt
 

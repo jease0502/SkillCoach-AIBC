@@ -145,7 +145,7 @@ Important notes:
   (compliance pre-check, grounding post-check, state, coach) so they finish in
   about a second.
 - The persona and scenario builder runs on `gemini-4-argon` with thinking
-  `low`. PENDING re-measure on `gemini-4-argon`. Measured on `gemini-3.8-flash` (live, 2026-10-16, nothing saved): 3 personas from documents in 13.5 s, a scenario in 11.4 s, a persona from a brief in 9.1 s, with every returned citation verified against the source text (37 of 37). (On 3.x, Flash had matched `gemini-3.1-pro-preview` at 2-3x the speed, 12.8 s vs 25.3 s for 3 personas.)
+  `low`. Measured on live `gemini-4-argon` (2026-10-16, two runs, nothing saved): 3 personas from documents in 36-40 s, a scenario in 26-30 s, a persona from a brief in 18-29 s, with every returned citation verified against the source text (106 of 106). That is about 3x slower than `gemini-3.8-flash` (13 s / 11 s / 9 s), with richer, more heavily cited drafts. (On 3.x, Flash had matched `gemini-3.1-pro-preview` at 2-3x the speed, 12.8 s vs 25.3 s for 3 personas.)
 - `gemini-embedding-001` returns 3072 dims by default; Firestore vector
   indexes cap at 2048. The `embed()` wrapper always passes
   `output_dimensionality=768` and normalizes the vectors.
@@ -286,9 +286,9 @@ Notes:
   is reached.
 
 Latency targets (text mode): first `customer_delta` within about 1.5 s,
-`done` within about 4 s. Measured on live with `gemini-3.8-flash` (2026-10-16; PENDING re-measure on `gemini-4-argon`): first
-token 1.7-2.0 s and `done` in 3.3-3.6 s (5.5 s / 6.8 s on a turn with a compliance violation),
-retrieval 0.17-0.24 s, pre-check 0.8-1.3 s, report 9.9 s (about 3 s when drafted speculatively). Every agent call has a timeout (about 8 s). If a
+`done` within about 4 s. Measured on live with `gemini-4-argon` (2026-10-16): first
+token 2.0-2.7 s and `done` in 4.8-5.5 s, retrieval 0.23-0.28 s, compliance pre-check
+0.86-1.33 s, report 6.1 s at `/end` (cold, no speculative draft). Every agent call has a timeout (about 8 s). If a
 non-critical agent (post-check, scorer, coach) times out or returns an
 invalid schema, the orchestrator skips it, logs it, and the turn still
 completes. Only the customer agent is on the critical path; if it fails,

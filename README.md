@@ -58,8 +58,8 @@ SkillCoach lets an employee practice a realistic conversation, by text or voice,
 | Real-time coach hints | Core |
 | End-of-session rubric report with verified quoted evidence and source citations | Core |
 | Manager dashboard: aggregates plus session summaries (no transcripts) and a "Ready to go live" count | Core (basic) |
-| Voice practice via browser Web Speech API | Planned / stretch |
-| Voice practice via Gemini Live API (low-latency, interruptible) | Planned |
+| Browser voice (Web Speech API): speech-to-text input and spoken customer replies; text mode always available | Shipped |
+| Native voice via Gemini Live API (low-latency, interruptible) | Planned |
 | 3D VRM avatar (three-vrm) with lip sync | Planned |
 | On-device facial emotion cues (MediaPipe, browser only, no video leaves the device) | Planned |
 
@@ -76,7 +76,7 @@ SkillCoach uses seven Gemini agent roles: builder, precheck judge, persona, grou
 | **Compliance post-check (grounding)** | `gemini-3.5-flash-lite` | Checks the customer's reply for product claims that are not supported by the retrieved knowledge, so the AI customer does not teach wrong facts. Runs concurrently with state + coach and emits the `compliance_post` SSE event with `ComplianceFlag` items (`rule_id: "GROUNDING"`). | Structured output, grounding check against retrieved chunks |
 | **State** and **coach** (two agents) | `gemini-3.5-flash-lite` | Updates customer trust and patience, and gives one short, actionable hint for the next turn ("Acknowledge the cost concern before pitching ROI"), citing the playbook passage it relies on. | Structured output, RAG over playbooks |
 | **Report (scorer)** | `gemini-4-argon` (`GEMINI_PRO_MODEL`; fallbacks `gemini-3.1-pro-preview`, `gemini-2.5-pro`) | At session end, scores each rubric dimension (e.g. discovery, objection handling, accuracy, empathy). Every score must quote the trainee's exact words. | Long context (full transcript + rubric + sources), structured output |
-| **Persona / scenario builder** | `gemini-4-argon` (thinking `low`) | Drafts personas and scenarios (compliance rules, rubric) from uploaded documents, with citations to the source passages. Drafts need human approval. Live timing PENDING re-measure on Argon. | Structured output, parallel expansion, RAG over uploaded docs |
+| **Persona / scenario builder** | `gemini-4-argon` (thinking `low`) | Drafts personas and scenarios (compliance rules, rubric) from uploaded documents, with citations to the source passages. Drafts need human approval. Live: 3 personas in 36-40 s, a scenario in 26-30 s, every citation verified. | Structured output, parallel expansion, RAG over uploaded docs |
 | **Retrieval** | `gemini-embedding-001` (`GEMINI_EMBED_MODEL`, 768 dims) | Embeds uploaded documents and queries for semantic search; results carry chunk-level citations. | `embed_content` |
 
 Locations (verified on 2026-10-15): Gemini generation runs on the Vertex AI `global` endpoint (`GOOGLE_CLOUD_LOCATION=global`), because the Gemini 3.x models are served only there. Embeddings (`GEMINI_EMBED_LOCATION=asia-east1`), the Cloud Run services and Firestore all run in `asia-east1`; regional embeddings take about 170 ms per query vs about 1.1 s on `us-central1`.
@@ -156,7 +156,7 @@ gcloud run deploy skillcoach-api --source backend --region asia-east1 --allow-un
 
 ## Tech Stack
 
-- **Frontend:** Next.js (React, TypeScript), Tailwind CSS; planned: Web Speech API, three-vrm, MediaPipe Face Landmarker
+- **Frontend:** Next.js (React, TypeScript), Tailwind CSS, browser Web Speech API (speech-to-text and `speechSynthesis`); planned: Gemini Live API voice, three-vrm, MediaPipe Face Landmarker
 - **Backend:** Python, FastAPI, Pydantic
 - **AI:** seven Gemini agent roles on `gemini-4-argon` (persona, builder, report) and `gemini-3.5-flash-lite` (precheck, grounding, state, coach), with automatic fallback chains to `gemini-3.8-flash`, `gemini-3.1-pro-preview` and `gemini-2.5-pro`, `gemini-embedding-001` (768 dims), via the `google-genai` SDK on Vertex AI; planned: Gemini Live API
 - **Data:** Firestore in `asia-east1` (sessions, knowledge chunks, vectors); in-memory store for local development

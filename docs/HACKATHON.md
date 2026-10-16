@@ -59,7 +59,7 @@ This document maps SkillCoach to the judging criteria, and contains the demo vid
 | What judges look for | Evidence to show |
 | --- | --- |
 | Usability | Three clicks from landing to first practice turn. Demo scenarios preloaded. |
-| Accessibility | Text mode always available (voice is optional); keyboard navigation; sufficient contrast; captions/transcript for every voice turn; no color-only signals (compliance flags use icon + label). |
+| Accessibility | Text mode always available (browser voice via Web Speech is shipped but optional); keyboard navigation; sufficient contrast; captions/transcript for every voice turn; no color-only signals (compliance flags use icon + label). |
 | Components working cohesively | Compliance flag, coach hint, persona reply and citations appear in one coherent turn view; the final report links each score back to the exact turn. |
 | Clarity of feedback | Each hint is one sentence; each score has one quote and one suggestion. |
 

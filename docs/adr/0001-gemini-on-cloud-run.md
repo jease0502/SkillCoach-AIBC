@@ -45,7 +45,8 @@ work, so 2.5 is kept as a fallback only.
      customer persona and the persona/scenario builder. On 3.x, a benchmark
      on the seed KB showed Flash matching `gemini-3.1-pro-preview` at 2-3x
      the speed, so the builder had moved off Pro; Gemini 4 Argon now covers
-     both needs (builder timing PENDING re-measure on Argon).
+     both needs, at a cost in latency (builder 18-40 s on live vs 9-13 s on
+     3.8 Flash, all citations verified).
    - `GEMINI_LITE_MODEL=gemini-3.5-flash-lite` (thinking `low`) for the
      per-turn judgments: compliance pre-check, grounding post-check, state,
      coach (structured output, about 1 s).
@@ -75,8 +76,9 @@ work, so 2.5 is kept as a fallback only.
    using Firestore's built-in vector search (flat index, cosine). The
    in-memory backend implements the same interface for local dev, tests
    and as a fallback.
-5. **Voice:** browser Web Speech API for the MVP (transcripts go through the
-   same text pipeline); Gemini Live API is a stretch goal.
+5. **Voice:** browser Web Speech API in the MVP, shipped (speech-to-text
+   input goes through the same text pipeline; customer replies are spoken
+   with `speechSynthesis`); Gemini Live native voice is planned.
 6. **Secrets in Secret Manager**, mounted with `--set-secrets`. No model key
    reaches the browser.
 7. **Data residency statement:** data at rest stays in the chosen APAC

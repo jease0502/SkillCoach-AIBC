@@ -159,9 +159,14 @@ async function scrollBy(page, dy, seconds = 1.2) {
   await sleep(seconds);
 }
 
-/** Wait for the `done` event of the current turn (the trace shows "First token" only after it). */
+/**
+ * Wait for the `done` event of the turn just sent. The trace shows "First token" only after `done`,
+ * and clears it when a new turn starts, so wait for it to go away first.
+ */
 async function waitTurnDone(page) {
-  await page.getByText('First token', { exact: true }).waitFor({ timeout: 60_000 });
+  const stat = page.getByText('First token', { exact: true });
+  await stat.waitFor({ state: 'hidden', timeout: 15_000 });
+  await stat.waitFor({ timeout: 60_000 });
   await sleep(0.6);
 }
 
@@ -282,7 +287,11 @@ async function run() {
     await moveTo(page, input);
     await input.pressSequentially(LINES.discovery, { delay: TYPE_DELAY - 8 });
     await page.keyboard.press('Enter');
-    await moveTo(page, page.getByRole('heading', { name: 'Gemini pipeline, last turn' }), { click: false, settle: 0 });
+    const pipeline = page.getByRole('heading', { name: 'Gemini pipeline, last turn' });
+    // Center the trace card so the burned-in captions do not cover it.
+    await pipeline.evaluate((h) => (h.closest('div.rounded-xl') ?? h).scrollIntoView({ block: 'center', behavior: 'smooth' }));
+    await sleep(0.9);
+    await moveTo(page, pipeline, { click: false, settle: 0 });
     await waitTurnDone(page);
     await rec.quiet(-0.4);
 

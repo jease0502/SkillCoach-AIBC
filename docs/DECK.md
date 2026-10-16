@@ -6,15 +6,15 @@ Measured numbers come from the deployed build (Cloud Run `asia-east1`, real Gemi
 
 | Measurement | Value | Where it was measured |
 | --- | --- | --- |
-| Customer reply, full turn | 3.3-3.6 s (6.8 s on a turn with a compliance violation) | PENDING re-measure on `gemini-4-argon`; the values are from `gemini-3.8-flash` |
-| First streamed token | 1.7-2.0 s (5.5 s on a violating turn) | PENDING re-measure on `gemini-4-argon`; the values are from `gemini-3.8-flash` |
-| Knowledge-base retrieval | 0.17-0.24 s | live |
-| Compliance Guard (`/precheck`) | 0.8-1.3 s | live, `gemini-3.5-flash-lite` |
-| End-of-session report | 9.9 s (about 3 s when drafted speculatively during the session) | PENDING re-measure on `gemini-4-argon`; the values are from `gemini-3.8-flash` |
-| Persona / scenario generation | 9-14 s (9.1 s from a brief, 13.5 s for 3 personas from documents, 11.4 s for a scenario); 37 of 37 citations verified | PENDING re-measure on `gemini-4-argon`; the values are from `gemini-3.8-flash`, 2026-10-16 |
-| Scenario A (sales, high-score path) | overall **100**, compliance PASS, 2 of 2 live runs | [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
-| Scenario B (insurance, guaranteed return) | compliance **FAIL**, overall **26** (gate caps at 59) | live run in the browser on the deployed web app |
-| Scenario C (support escalation) | overall **81**, medium flag then recovery, 2 of 2 live runs | [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
+| Customer reply, full turn | 4.8-5.5 s | live, `gemini-4-argon` (lead's measurement) |
+| First streamed token | 2.0-2.7 s | live, `gemini-4-argon` (lead's measurement) |
+| Knowledge-base retrieval | 0.23-0.28 s | live |
+| Compliance Guard (`/precheck`) | 0.86-1.33 s | live, `gemini-3.5-flash-lite` |
+| End-of-session report | 6.1 s at `/end` (cold, no speculative draft) | live, `gemini-4-argon` (lead's measurement) |
+| Persona / scenario generation | 18-40 s (18-29 s from a brief, 36-40 s for 3 personas from documents, 26-30 s for a scenario); 106 of 106 citations verified | live, `gemini-4-argon`, two runs, 2026-10-16 |
+| Scenario A (sales, high-score path) | overall **94**, compliance PASS on `gemini-4-argon` (session `034508c874`); 100 in 2 of 2 earlier runs on the 3.8 Flash build | [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
+| Scenario B (insurance, guaranteed return) | compliance **FAIL**, score capped (**30** in the recorded run, session `5867b49a17`; gate caps at 59) | recorded demo run on the deployed web app |
+| Scenario C (support escalation) | overall **68**, RR-01 (medium) flag, then recovery and gift reveal, compliance passed, on `gemini-4-argon` (session `3ca9d80201`); 81 in 2 of 2 earlier runs on the 3.8 Flash build | [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
 
 Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem Alignment & Impact (25%), **N** = Innovation & Creativity (25%), **U** = UX & Solution Design (10%).
 
@@ -76,7 +76,7 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 - **Practice:** a live AI customer with hidden concerns, a Compliance Guard that intercepts a risky message before it is sent, and a one-sentence coach hint on every turn.
 - **Prove:** an evidence-verified report with a compliance gate, and a manager view of who is ready to go live.
 
-**Speaker notes.** The loop has three steps. Build: an admin uploads documents, and in 8 to 13 seconds Gemini drafts realistic customers from them. Each objection and hidden need carries a citation to the passage it came from, and nothing is used until a human approves it. Practice: the trainee talks to the AI customer, who has a real concern they won't reveal unless asked well. Before each message is sent, the Compliance Guard checks it against the company's rules in about a second. Prove: the report quotes the trainee's own words for every score, and one serious violation fails the session.
+**Speaker notes.** The loop has three steps. Build: an admin uploads documents, and in well under a minute Gemini drafts a set of realistic customers from them. Each objection and hidden need carries a citation to the passage it came from, and nothing is used until a human approves it. Practice: the trainee talks to the AI customer, who has a real concern they won't reveal unless asked well. Before each message is sent, the Compliance Guard checks it against the company's rules in about a second. Prove: the report quotes the trainee's own words for every score, and one serious violation fails the session.
 
 **Visual.** User-flow diagram with three swim lanes (Admin, Trainee, Manager): Upload → Generate persona (citation chips) → Approve → Practice turn (Guard, persona, coach) → Report (compliance gate) → Dashboard (Ready count).
 
@@ -88,9 +88,9 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 
 **Same engine, three industries, three different outcomes.**
 
-- **A. SaaS sales, pricing objection:** the trainee uncovers the real concern (adoption, not price), answers with product facts and books a pilot. **Overall 100, compliance PASS** in 2 of 2 live runs.
-- **B. Insurance, guaranteed-return trap:** "this plan guarantees you 8% a year" is held back by the Compliance Guard (rule CC-01, high). Sent anyway, it **fails the session: overall 26**.
-- **C. Support escalation:** a refund promise outside policy is flagged (RR-01, medium); the trainee recovers, and the customer reveals the story behind the anger. **Overall 81**, compliance passed.
+- **A. SaaS sales, pricing objection:** the trainee uncovers the real concern (adoption, not price), answers with product facts and books a pilot. **Overall 94, compliance PASS** on the Argon build (session `034508c874`).
+- **B. Insurance, guaranteed-return trap:** "this plan guarantees you 8% a year" is held back by the Compliance Guard (rule CC-01, high). Sent anyway, it **fails the session**: score capped (30 in the recorded run, session `5867b49a17`).
+- **C. Support escalation:** a refund promise outside policy is flagged (RR-01, medium); the trainee recovers, and the customer reveals the story behind the anger. **Overall 68**, compliance passed, on the Argon build (session `3ca9d80201`).
 
 **Speaker notes.** These are not replays. Every customer line is generated live by Gemini, so the wording changes each time, but the behaviors are stable because they are anchored in seed data: verbatim opening lines, explicit compliance rules with citations, and objections tied to triggers. In A, a good discovery question makes the CFO admit her team abandoned the last tool, and the trainee closes on a pilot with a date. In B, the Guard stops a guaranteed-return promise before it reaches the customer. In C, the customer only shares that the headphones were a birthday gift after the trainee apologizes, offers real options and asks gently. That is the soft skill we want to train.
 
@@ -108,9 +108,9 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 - Vertex AI: Gemini 3.x generation on the `global` endpoint (`google-genai` SDK); `gemini-embedding-001` in `asia-east1`, next to Cloud Run.
 - Firestore (`asia-east1`): documents, chunks with vectors, personas, scenarios, sessions, reports.
 
-**Speaker notes.** The system has no servers to manage and no custom model training. The frontend and API are stateless Cloud Run services that autoscale. Every turn is one HTTP request that streams events back to the browser: the compliance pre-check, the customer's reply token by token, the grounding post-check, the trust and patience meters, and the coach hint. Retrieval takes about 0.2 seconds on the live service. Data at rest and embeddings stay in the APAC region we choose; Gemini generation runs through the Vertex AI global endpoint, and we say exactly that to buyers [S27].
+**Speaker notes.** The system has no servers to manage and no custom model training. The frontend and API are stateless Cloud Run services that autoscale. Every turn is one HTTP request that streams events back to the browser: the compliance pre-check, the customer's reply token by token, the grounding post-check, the trust and patience meters, and the coach hint. Retrieval takes about 0.25 seconds on the live service. Data at rest and embeddings stay in the APAC region we choose; Gemini generation runs through the Vertex AI global endpoint, and we say exactly that to buyers [S27].
 
-**Visual.** Architecture diagram: Browser → Cloud Run web → Cloud Run API → (Vertex AI Gemini `global`; `gemini-embedding-001` and Firestore in `asia-east1`). Underneath, the per-turn pipeline as a timeline: `precheck` (~1 s) → retrieval (~0.2 s) → persona stream (first token ~1.7-2.0 s) → grounding + state + coach in parallel → `done` (~3.5 s).
+**Visual.** Architecture diagram: Browser → Cloud Run web → Cloud Run API → (Vertex AI Gemini `global`; `gemini-embedding-001` and Firestore in `asia-east1`). Underneath, the per-turn pipeline as a timeline: `precheck` (~1 s) → retrieval (~0.25 s) → persona stream (first token ~2-2.7 s) → grounding + state + coach in parallel → `done` (~5 s).
 
 **Criteria.** **T** (mandatory platform use, engineering quality).
 
@@ -128,10 +128,10 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 | Grounding post-check | `gemini-3.5-flash-lite` | Structured JSON, runs **in parallel** with state and coach | Flags product claims the retrieved passages don't support |
 | State (trust / patience) | `gemini-3.5-flash-lite` | Structured JSON | Deltas clamped; a high-severity violation always costs trust |
 | Coach | `gemini-3.5-flash-lite` | Structured JSON with KB citations | One sentence, grounded in the playbook |
-| Report scorer | `gemini-4-argon` | Long-context structured output (timing PENDING re-measure on Argon) | Evidence must be a verbatim quote from the transcript; otherwise unverified and the dimension is capped at 50; any high-severity violation caps the score at 59 |
+| Report scorer | `gemini-4-argon` | Long-context structured output, about 6 s | Evidence must be a verbatim quote from the transcript; otherwise unverified and the dimension is capped at 50; any high-severity violation caps the score at 59 |
 
 - **Right model for the job:** Gemini 4 Argon where quality shows (the customer's voice, the builder, the report); Flash-Lite for per-turn judgments that must finish in about a second. Every tier has an automatic fallback chain (Argon → 3.8 Flash; report → 3.1 Pro → 2.5 Pro), so a model outage degrades quality, not availability.
-- **Thinking control:** `low` on every agent keeps a full turn at 3.3-3.6 s with the first words in under 2 s (PENDING re-measure on Argon). We benchmark every model switch on the live service (Argon builder timing PENDING re-measure).
+- **Thinking control:** `low` on every agent keeps a full turn at about 5 s with the first words in 2-2.7 s. We benchmark every model switch on the live service: Argon drafts richer, more heavily cited personas than 3.8 Flash (106 of 106 citations verified) at about 3x the generation time, a trade-off we accept for a one-off authoring step.
 - **Citation verification everywhere:** the model never decides on its own what counts as evidence. The server checks every quote against the source text.
 
 **Speaker notes.** This is the core of our technical story. Instead of one big prompt, each job is a separate Gemini call with its own system instructions and JSON schema, and the cheapest model that does the job well. Calls that don't depend on each other run in parallel. The compliance judge starts while retrieval and the reply run. After the reply, the grounding check, the state update and the coach hint all run at once. The most important design decision is that nothing the model claims as evidence is trusted. Persona citations, scenario rules and report quotes are all checked by the server against the documents or the transcript, and anything that doesn't match is dropped or marked unverified.
@@ -148,7 +148,7 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 
 - **Before sending:** the Compliance Guard quotes the exact phrase and names the rule (CC-01, "guarantees you 8% a year").
 - **While talking:** persona drafts, scenario rules and rubric items all cite the source passage; a trainer approves every persona before use.
-- **After the session:** quotes are verified against the transcript; a high-severity violation sets `compliance_passed = false` and caps the score at 59 (Scenario B: 26).
+- **After the session:** quotes are verified against the transcript; a high-severity violation sets `compliance_passed = false` and caps the score at 59 (Scenario B: FAIL, 30 in the recorded run, session `5867b49a17`).
 
 **Speaker notes.** In regulated industries, an AI score nobody can explain is a score nobody will accept, not the trainee, not HR and not the Compliance Officer. So trust is designed in at three points. The compliance gate mirrors real life: a great conversation with one forbidden promise still fails. This kind of explainability is what regional regulators ask for in their AI guidance [S13] and what MAS's competence expectations need as evidence [S29].
 
@@ -182,9 +182,9 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 - **Scales:** stateless Cloud Run autoscaling, Firestore per tenant, Flash-Lite for the per-turn judgments to keep cost down; model cost is well under US$2 per seat per month at 8 sessions per rep **(estimate)**.
 - **Honest limits:** live wording varies by run (behavior is anchored in seed rules and triggers); Gemini generation runs on the Vertex AI global endpoint while data at rest and embeddings stay in the APAC region [S27].
 
-**Speaker notes.** Everything shown is running on the live service. The numbers we measured there: about 1 second for the Compliance Guard, 3.3 to 3.6 seconds per full turn with the first words in under 2 seconds, and about 10 seconds for the report, or about 3 when it is drafted during the session. (PENDING re-measure on Argon.) On data residency we are deliberately precise: documents, transcripts, scores and embeddings stay in the chosen APAC region, Gemini generation goes through the Vertex AI global endpoint because that is where Gemini 4 Argon and the 3.x models are served, and Vertex AI does not train on customer data [S27]. We never claim that data never leaves a country.
+**Speaker notes.** Everything shown is running on the live service. The numbers we measured there: about 1 second for the Compliance Guard, about 5 seconds per full turn with the first words in 2 to 3 seconds, and about 6 seconds for the report. On data residency we are deliberately precise: documents, transcripts, scores and embeddings stay in the chosen APAC region, Gemini generation goes through the Vertex AI global endpoint because that is where Gemini 4 Argon and the 3.x models are served, and Vertex AI does not train on customer data [S27]. We never claim that data never leaves a country.
 
-**Visual.** A latency strip from the live service: "Guard ~1 s · first token < 2 s · turn ~3.5 s · report ~10 s (~3 s speculative) · persona generation 9-14 s" (PENDING re-measure on Argon). Below it, a small data-residency box: "At rest + embeddings: asia-east1 · Gemini generation: Vertex AI global".
+**Visual.** A latency strip from the live service: "Guard ~1 s · first token 2-2.7 s · turn ~5 s · report ~6 s · persona generation 18-40 s". Below it, a small data-residency box: "At rest + embeddings: asia-east1 · Gemini generation: Vertex AI global".
 
 **Criteria.** **T** (engineering quality, platform use); **I** (feasibility).
 
@@ -200,7 +200,7 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 
 **Speaker notes.** Insurance is where all four pains meet: churn, untested new hires, compliance risk and know-how trapped in senior people, and the buyer already has a training budget line. Singapore lets us sell in English today under a regulator whose expectations map directly to evidence-backed practice. AI role-play itself is not new, so our wedge is specific: documents in, approved personas out, and a compliance gate with verbatim evidence. We price per active seat because agency headcount churns.
 
-**Visual.** APAC map with three waves (Singapore; Philippines and Hong Kong; Taiwan, Japan, Korea), and a small competitor matrix: rows Hyperbound, Second Nature, Mindtickle/Allego, SkillCoach; columns "own-document personas with approval", "compliance gate with verbatim evidence", "APAC data at rest".
+**Visual.** APAC map with three waves (Singapore; Philippines and Hong Kong; Taiwan, Japan, Korea), and a small competitor matrix: rows Hyperbound, Second Nature, Mindtickle/Allego, SkillCoach; columns "own-document personas with approval", "compliance gate with verbatim evidence", "APAC data at rest". Cells we cannot source for competitors read "not stated" (our assessment from public positioning, see [BUSINESS_CASE.md](BUSINESS_CASE.md) section 4).
 
 **Criteria.** **I** (who benefits, breadth); **N** (positioning).
 
@@ -208,9 +208,9 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 
 ## Slide 12. Roadmap and team
 
-**Now shipped: text practice, document-generated personas with approval, multi-agent turns, evidence-verified reports, manager readiness view.**
+**Now shipped: text practice, browser voice (Web Speech: speech-to-text input and spoken customer replies), document-generated personas with approval, multi-agent turns, evidence-verified reports, manager readiness view.**
 
-- **Next (planned):** voice with the Gemini Live API, a VRM avatar, on-device emotion cues, more APAC languages.
+- **Next (planned):** Gemini Live native voice, a VRM avatar, on-device emotion cues, more APAC languages.
 - **Later (planned):** LMS and CRM integration, scenarios from anonymized real calls, certification tracks, calibration against senior assessors.
 - **Team:** `[Name, role, one-line background]` × N · live demo https://skillcoach-web-817759648389.asia-east1.run.app · video `[URL]` · GitHub https://github.com/jease0502/SkillCoach-AIBC
 
