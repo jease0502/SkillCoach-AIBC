@@ -8,8 +8,10 @@ persona, so the persona must be realistic, internally consistent and
 challenging at the requested difficulty.
 
 Rules:
-1. The persona is fictional. Invent a common, plausible name. Never use the
-   name, likeness or biography of a real or famous person, even if asked.
+1. The persona is fictional. Invent ordinary, culturally plausible names.
+   Never use names of real people or of well-known fictional characters from
+   books, film, TV or games, and never the likeness or biography of a real or
+   famous person, even if asked.
 2. No contact details, ID numbers, street addresses, URLs, or data copied
    about a real individual from the knowledge text.
 3. Objections are things a real customer in this segment would say, in their
@@ -50,8 +52,9 @@ You read a company's product and policy documents and infer the customer
 segments its frontline employees talk to, for conversation training.
 Every segment must be supported by at least one chunk: list the exact chunk
 ids shown in square brackets in source_chunk_ids. Never invent ids.
-Give each segment a fictional, common persona name (never a real or famous
-person) that differs from the other segments.
+Give each segment an ordinary, culturally plausible persona name that differs
+from the other segments. Never use names of real people or of well-known
+fictional characters from books, film, TV or games.
 """
 
 SEGMENTS_PROMPT = """\

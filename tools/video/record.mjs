@@ -292,7 +292,7 @@ async function run() {
     await rec.cut('Report generation', async () => {
       await page.waitForURL(/\/reports\//, { timeout: 120_000 });
       await page.getByText(/COMPLIANCE (PASS|FAIL)/).waitFor({ timeout: 120_000 });
-    }, { keep: 2.5 });
+    }, { keep: 1.8 });
     await page.mouse.move(700, 300, { steps: 15 });
     await sleep(0.8);
     await rec.cue('c14_gate');

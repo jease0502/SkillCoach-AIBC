@@ -25,7 +25,8 @@ chain. That is weeks of work and most of it is plumbing that judges cannot see.
 
 Model availability also matters. On 2026-10-15 we tested the project
 (`project-6d34f8a9-8150-4e6a-ae7`) on Vertex AI: `gemini-3.8-flash`,
-`gemini-3.5-flash-lite` and `gemini-3.1-pro-preview` return 200 only on
+`gemini-3.5-flash-lite` and `gemini-3.1-pro-preview` (and later
+`gemini-4-argon`) return 200 only on
 `location=global` (404 on `us-central1`); `gemini-2.5-flash` and
 `gemini-2.5-pro` work on both; `gemini-embedding-001` is regional and
 works in `asia-east1` (about 170 ms from Cloud Run vs about 1.1 s on
@@ -40,15 +41,19 @@ work, so 2.5 is kept as a fallback only.
    `GEMINI_EMBED_LOCATION=asia-east1` for embeddings).
    - Seven Gemini agent roles: builder, precheck judge, persona, grounding,
      state, coach, report.
-   - `GEMINI_FAST_MODEL=gemini-3.8-flash` (thinking `low`) for the streamed
-     customer persona and the persona/scenario builder. A benchmark on the
-     seed KB showed Flash matching `gemini-3.1-pro-preview` on generation
-     quality while being 2-3x faster, so the builder moved off Pro.
+   - `GEMINI_FAST_MODEL=gemini-4-argon` (thinking `low`) for the streamed
+     customer persona and the persona/scenario builder. On 3.x, a benchmark
+     on the seed KB showed Flash matching `gemini-3.1-pro-preview` at 2-3x
+     the speed, so the builder had moved off Pro; Gemini 4 Argon now covers
+     both needs (builder timing PENDING re-measure on Argon).
    - `GEMINI_LITE_MODEL=gemini-3.5-flash-lite` (thinking `low`) for the
      per-turn judgments: compliance pre-check, grounding post-check, state,
      coach (structured output, about 1 s).
-   - `GEMINI_PRO_MODEL=gemini-3.1-pro-preview` (fallback `gemini-2.5-pro`)
-     for the final report.
+   - `GEMINI_PRO_MODEL=gemini-4-argon` for the final report.
+   - Each tier has a fallback chain (`GEMINI_*_FALLBACKS`): fast `gemini-4-argon` → `gemini-3.8-flash`;
+     pro `gemini-4-argon` → `gemini-3.1-pro-preview` → `gemini-2.5-pro`;
+     lite `gemini-3.5-flash-lite` → `gemini-3.8-flash`.
+     On 404/429/5xx, a timeout or invalid JSON the call moves to the next model, and the failed model cools down for 60 s.
    - `GEMINI_EMBED_MODEL=gemini-embedding-001` at 768 dimensions for RAG.
    - `gemini-3.8-live` only if the Gemini Live voice stretch goal is built.
    - Every model ID and location is an environment variable (names and
@@ -85,7 +90,7 @@ work, so 2.5 is kept as a fallback only.
 |---|---|
 | Gemini Developer API (AI Studio key) as primary | Works, and is faster to start, but needs a key secret everywhere and fits enterprise IAM less well. Kept as fallback. |
 | Gemma self-hosted on Cloud Run GPU | Satisfies the "Gemma" rule, but GPU quota, cold starts and image size are a risk on a 3-day clock, and quality for nuanced role-play is lower. Could be a later "on-prem" story. |
-| Gemini 2.5 Flash / Pro as defaults | They work in our project (on both `global` and `us-central1`, verified 2026-10-15), but the 3.x models are the recommended line for new work. `gemini-2.5-pro` is kept as the `GEMINI_PRO_MODEL` fallback. |
+| Gemini 2.5 Flash / Pro as defaults | They work in our project (on both `global` and `us-central1`, verified 2026-10-15), but the 3.x models are the recommended line for new work. `gemini-2.5-pro` is kept as the last `GEMINI_PRO_MODEL` fallback. |
 | Regional endpoint (`us-central1` or `asia-east1`) for generation | Gemini 3.x models return 404 on `us-central1`; they are only served from `global`. Regional processing would force us back to 2.5. |
 | Firebase Genkit / Agent Development Kit (ADK) | Good frameworks, but our pipeline is seven fixed agent roles. Plain async Python is easier to debug in three days and makes the agent flow explicit in code. Revisit post-hackathon. |
 | Vertex AI Vector Search / AlloyDB pgvector | More scalable, but each adds provisioning time and cost. Firestore vectors are enough for thousands of chunks and we already need Firestore for app data. |

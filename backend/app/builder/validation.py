@@ -47,11 +47,29 @@ def _fold(text: str) -> str:
     return re.sub(r"\s+", " ", text)
 
 
+# Well-known fictional characters (books, film, TV, games) plus names generation
+# models keep reusing. A persona named like this looks unprofessional on screen.
+_FICTIONAL_CHARACTERS = {
+    "eleanor vance", "marcus brody", "marcus vance", "sherlock holmes", "hermione granger",
+    "harry potter", "ron weasley", "walter white", "jesse pinkman", "tony stark", "bruce wayne",
+    "clark kent", "peter parker", "james bond", "indiana jones", "frodo baggins", "jon snow",
+    "tyrion lannister", "homer simpson", "don draper", "michael scott", "dwight schrute",
+    "lara croft", "atticus finch", "jay gatsby", "elizabeth bennet", "darth vader",
+    "luke skywalker", "ellen ripley", "forrest gump", "hannibal lecter", "ted lasso",
+    "dana scully", "fox mulder", "leslie knope", "sarah connor", "ebenezer scrooge",
+}
+
+
 def real_person_issue(name: str) -> str | None:
+    """Blocks names of real public figures and of well-known fictional characters."""
     folded = _fold(name)
     for real in _REAL_PEOPLE:
         if folded == real or (len(real) > 4 and real in folded):
             return f"Name '{name}' matches a real public figure; personas must be fictional."
+    for character in _FICTIONAL_CHARACTERS:
+        if re.search(rf"\b{re.escape(character)}\b", folded):
+            return (f"Name '{name}' is a well-known fictional character; invent an ordinary, "
+                    "culturally plausible name instead.")
     return None
 
 

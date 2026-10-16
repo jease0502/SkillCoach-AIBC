@@ -5,7 +5,7 @@
     {
       "id": "c01_title",
       "card": "title",
-      "text": "New hires learn on real customers. Role-play would help, but senior staff have no time for it. And one wrong promise can cost a company dearly."
+      "text": "New hires learn on real customers. Role-play needs senior staff nobody can spare, and one wrong promise can cost a company dearly."
     },
     {
       "id": "c02_landing",
@@ -49,7 +49,7 @@
     },
     {
       "id": "c12_pipeline",
-      "text": "Each turn runs a pipeline of Gemini agents: a fast Flash-Lite compliance judge, the Gemini 4 customer, a grounding check, a trust model, and the coach."
+      "text": "Each turn runs a pipeline of Gemini agents: compliance judge, customer, grounding check, trust model, and coach."
     },
     {
       "id": "c13_end",
@@ -70,7 +70,7 @@
     {
       "id": "c17_arch",
       "card": "arch",
-      "text": "Seven Gemini agent roles: Gemini 4 Argon for the customer, builder and report, and Gemini 3.5 Flash-Lite for the fast checks, on Vertex AI and Cloud Run. This is the future of work: every new hire gets a tireless practice partner."
+      "text": "Seven Gemini agent roles: Gemini 4 Argon for the customer, builder and report, Flash-Lite for the fast checks. The future of work: a tireless practice partner for every new hire."
     },
     {
       "id": "c18_end",

@@ -121,7 +121,7 @@ fs.writeFileSync(
     '',
     '[V4+ Styles]',
     'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding',
-    'Style: Caption,Segoe UI,46,&H00FFFFFF,&H00FFFFFF,&H60111827,&H60111827,1,0,0,0,100,100,0,0,3,14,0,2,200,200,46,1',
+    'Style: Caption,Segoe UI,46,&H00FFFFFF,&H00FFFFFF,&H50000000,&H50000000,1,0,0,0,100,100,0,0,3,14,0,2,200,200,46,1',
     'Style: Note,Segoe UI,34,&H00FFFFFF,&H00FFFFFF,&H30C53030,&H30C53030,1,0,0,0,100,100,0,0,3,12,0,9,60,60,110,1',
     '',
     '[Events]',

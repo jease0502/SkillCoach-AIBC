@@ -58,6 +58,21 @@ def test_brief_retries_once_after_a_real_person_name(run, llm):
     assert "real public figure" in llm.calls[1]["prompt"]
 
 
+def test_brief_retries_after_a_fictional_character_name(run, llm):
+    llm.queue(lambda p, s: persona_draft(p, name="Eleanor Vance"),
+              lambda p, s: persona_draft(p, name="Mei-Ling Ong"))
+    persona = run(generate_from_brief("A cautious pre-retiree"))
+    assert persona.name == "Mei-Ling Ong"
+    assert "well-known fictional character" in llm.calls[1]["prompt"]
+
+
+def test_prompts_forbid_fictional_character_names():
+    from app.builder import prompts
+
+    for text in (" ".join(prompts.PERSONA_SYSTEM.split()), " ".join(prompts.SEGMENTS_SYSTEM.split())):
+        assert "well-known fictional characters" in text and "culturally plausible" in text
+
+
 def test_brief_fails_after_two_bad_outputs(run, llm):
     llm.queue(lambda p, s: persona_draft(p, name="Elon Musk"), lambda p, s: persona_draft(p, name="Elon Musk"))
     with pytest.raises(GenerationError):
@@ -114,6 +129,15 @@ def test_docs_duplicate_segment_names_trigger_replan(run, seeded, llm):
               _expansion, _expansion, _expansion)
     personas = run(generate_from_docs(count=3))
     assert len(personas) == 3 and "different persona name" in llm.calls[1]["prompt"]
+
+
+def test_docs_fictional_segment_name_triggers_replan(run, seeded, llm):
+    # The segment name is passed on verbatim, so it has to be fixed at planning time.
+    llm.queue(_plan(["Marcus Brody", "Ben Okafor", "Chloe Park"]), _plan(["Ana Ruiz", "Ben Okafor", "Chloe Park"]),
+              _expansion, _expansion, _expansion)
+    personas = run(generate_from_docs(count=3))
+    assert [p.name for p in personas] == ["Ana Ruiz", "Ben Okafor", "Chloe Park"]
+    assert "well-known fictional character" in llm.calls[1]["prompt"]
 
 
 def test_docs_keep_the_personas_that_succeed(run, seeded, llm):

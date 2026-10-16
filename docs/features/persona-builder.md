@@ -10,7 +10,7 @@ Related: [Scenario Builder](scenario-builder.md), [Feature index](README.md), [A
 > - **Status:** `draft` or `approved` (not `published`/`archived`). Approve with `POST /api/personas/{id}/approve`; only approved personas can back a scenario.
 > - **Future (not in the MVP):** `workspace_id`, `version`, `public_summary`, the `demographics` object, `background`, OCEAN `personality`, structured `communication_style` and `knowledge_level`, Condition-based `reveal_when` / `trigger` and `resolved_by`, `emotion_model`, structured `voice` / `avatar`, `guardrails`, `provenance`, `safety`, segment cards, portraits.
 > - **MVP API:** `POST /api/personas/generate`, `POST /api/personas/generate-from-docs`, CRUD on `/api/personas`, and `/approve` (see [API_CONTRACT.md](../API_CONTRACT.md)). The `:generate`, `:segments` and `/portrait` endpoints in Section 7 are future.
-> - **Model:** persona generation uses `GEMINI_FAST_MODEL` (`gemini-3.8-flash`, thinking `low`) on the Vertex AI `global` endpoint. In a benchmark on the seed knowledge base (2026-10-15), Flash matched `gemini-3.1-pro-preview` on structure and citation coverage and was 2-3x faster (3 personas from documents 12.8 s vs 25.3 s; scenario 9.2 s vs 26.0 s).
+> - **Model:** persona generation uses `GEMINI_FAST_MODEL` (`gemini-4-argon`, thinking `low`, fallback `gemini-3.8-flash`) on the Vertex AI `global` endpoint. PENDING re-measure on `gemini-4-argon`. Measured on `gemini-3.8-flash` (live, 2026-10-16, nothing saved): 3 personas from documents in 13.5 s, a scenario in 11.4 s, a persona from a brief in 9.1 s, with every returned citation verified against the source text (37 of 37).
 
 ---
 
@@ -22,8 +22,8 @@ The Persona Builder lets a trainer (manager, enablement lead) create a persona i
 
 | Path | Input | Output | Gemini calls |
 | --- | --- | --- | --- |
-| (a) From a brief | One line, e.g. `cautious 45yo SME owner, already has insurance` | One full persona draft | 1 (Flash) |
-| (b) From company docs | A knowledge base (KB) the company already uploaded | 3 customer-segment cards, then one full persona for the chosen card | 2 (Flash) |
+| (a) From a brief | One line, e.g. `cautious 45yo SME owner, already has insurance` | One full persona draft | 1 (fast tier) |
+| (b) From company docs | A knowledge base (KB) the company already uploaded | 3 customer-segment cards, then one full persona for the chosen card | 2 (fast tier) |
 | (c) Manual | Blank form, or any draft from (a)/(b) | Edited persona | 0 |
 
 Every path ends in the same edit form and the same validated `Persona` JSON. Generated content is always a draft until a human saves it.
@@ -166,7 +166,7 @@ Stored in Firestore at `workspaces/{workspaceId}/personas/{personaId}`. A sessio
     "method": "from_docs",
     "brief": null,
     "kb_ids": ["kb_ins"],
-    "model": "gemini-3.8-flash",
+    "model": "gemini-4-argon",
     "generated_at": "2026-10-16T09:12:00Z",
     "edited_fields": ["name", "difficulty"]
   },
@@ -219,7 +219,7 @@ Stored in Firestore at `workspaces/{workspaceId}/personas/{personaId}`. A sessio
 ### 4.1 Per-turn update (deterministic, in code)
 
 ```
-signals = turn_analysis.signals                       # from the Flash per-turn call
+signals = turn_analysis.signals                       # from the per-turn call
 for s in signals:
     d = persona.emotion_model.deltas[s]
     trust    += d.trust    * (multiplier if d.trust    < 0 else 1)
@@ -288,10 +288,10 @@ from google.genai import types
 
 client = genai.Client(vertexai=True, project=settings.google_cloud_project,
                       location=settings.google_cloud_location)   # "global"
-FLASH = settings.gemini_fast_model   # default "gemini-3.8-flash"
+FLASH = settings.gemini_fast_model   # default "gemini-4-argon"
 ```
 
-This spec originally used Flash for all persona generation because it is interactive, latency-sensitive and the output is short. The MVP briefly used `GEMINI_PRO_MODEL`, then returned to Flash with thinking `low` after the benchmark in the implementation note at the top. Temperature 0.9 for variety in names and quirks; the schema keeps the structure stable.
+This spec originally used Flash for all persona generation because it is interactive, latency-sensitive and the output is short. The MVP briefly used `GEMINI_PRO_MODEL`, then returned to the fast tier with thinking `low` (now `gemini-4-argon`; see the implementation note at the top). Temperature 0.9 for variety in names and quirks; the schema keeps the structure stable.
 
 ### 5.2 Model-facing schema vs stored schema
 
@@ -478,7 +478,7 @@ Run on every generated draft and on every manual save. Implemented as a pure `va
 
 ### 6.2 No real people (blocking)
 
-- Brief pre-check: before calling Gemini, the brief is checked by a short Flash classification call (`{"refers_to_real_person": bool, "reason": str}`). If true, refuse with "Personas must be fictional. Describe a type of customer instead of a specific person."
+- Brief pre-check: before calling Gemini, the brief is checked by a short fast-tier classification call (`{"refers_to_real_person": bool, "reason": str}`). If true, refuse with "Personas must be fictional. Describe a type of customer instead of a specific person."
 - Name check: the generated name is checked against a small denylist (public figures commonly used in tests) and against person names present in the selected KB chunks (names extracted at ingestion time). A match forces regeneration of the name.
 - The trainer must tick "This persona is fictional and does not describe a real individual" before publishing (`safety.fictional_attested`).
 
@@ -491,7 +491,7 @@ Run on every generated draft and on every manual save. Implemented as a pure `va
 ### 6.4 Content safety (non-blocking warnings, blocking for severe)
 
 - Gemini safety settings at default thresholds on all builder calls.
-- Lint for protected-characteristic stereotypes in `background` and `quirks` (e.g. behavior attributed to ethnicity or religion). A Flash check returns warnings; the trainer sees them before saving.
+- Lint for protected-characteristic stereotypes in `background` and `quirks` (e.g. behavior attributed to ethnicity or religion). A fast-tier check returns warnings; the trainer sees them before saving.
 - `guardrails.may_invent_product_facts` is always `false`: the persona can invent personal life details, but product, price and policy facts must come from the KB through the persona agent's retrieval at session time.
 
 ### 6.5 Visibility

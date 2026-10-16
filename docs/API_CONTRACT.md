@@ -29,9 +29,9 @@ frontend/           Next.js 15 App Router + TypeScript + Tailwind (owner: web)
 | `GOOGLE_CLOUD_LOCATION` | `global` | Gemini 3.x models are only served from `global` (verified 2026-10-15) |
 | `GEMINI_EMBED_LOCATION` | `asia-east1` | embeddings endpoint, next to Cloud Run (about 170 ms vs 1.1 s on `us-central1`) |
 | `GEMINI_API_KEY` | - | only when not using Vertex |
-| `GEMINI_FAST_MODEL` | `gemini-3.8-flash` | customer persona, persona/scenario builder (verified 200 on `global`) |
+| `GEMINI_FAST_MODEL` | `gemini-4-argon` | customer persona, persona/scenario builder (`global` only); fallbacks in `GEMINI_FAST_FALLBACKS` (`gemini-3.8-flash`) |
 | `GEMINI_LITE_MODEL` | `gemini-3.5-flash-lite` | per-turn judgments: precheck, grounding, state, coach |
-| `GEMINI_PRO_MODEL` | `gemini-3.1-pro-preview` | final report (verified; fallback `gemini-2.5-pro`) |
+| `GEMINI_PRO_MODEL` | `gemini-4-argon` | final report; fallbacks in `GEMINI_PRO_FALLBACKS` (`gemini-3.1-pro-preview,gemini-2.5-pro`) |
 | `GEMINI_EMBED_MODEL` | `gemini-embedding-001` | `output_dimensionality=768` (Firestore max 2048) |
 | `GOOGLE_APPLICATION_CREDENTIALS` | - | local dev on Windows only: `\\wsl.localhost\Ubuntu-22.04\home\lin\.config\gcloud\legacy_credentials\jease@gta-robotics.com\adc.json`. Never copy it into the repo. Cloud Run uses its service account. |
 | `STORE_BACKEND` | `memory` | `memory` or `firestore` |

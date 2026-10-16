@@ -137,7 +137,7 @@ Moat over time **(hypothesis)**: a library of compliant personas and rubrics per
 **Sensitivity (where a skeptical CFO will push):**
 - With only line A (no ramp or retention gain), value is US$48k against US$40k cost. That is roughly break-even, so **the product cannot be sold as a pure cost cut.**
 - If the ramp gain is 0.25 month instead of 0.5, line B falls to US$31k and the total to about US$94k (2.4x).
-- Running cost per session **(estimate)**: a 15-20 turn text session uses about 6 model calls per turn (compliance pre/post, persona, coach, scorer, retrieval). With Flash-class models that is on the order of US$0.05-0.20 per session. Voice adds a few cents per minute. At 8 sessions per rep per month, model cost is well under US$2/seat/month, which leaves room for a healthy SaaS margin at US$25.
+- Running cost per session **(estimate)**: a 15-20 turn text session uses about 6 model calls per turn (compliance pre/post, persona, coach, scorer, retrieval). With Flash-Lite for the per-turn judgments and Gemini 4 Argon for the persona and report, that is on the order of US$0.05-0.20 per session. Voice adds a few cents per minute. At 8 sessions per rep per month, model cost is well under US$2/seat/month, which leaves room for a healthy SaaS margin at US$25.
 
 ---
 

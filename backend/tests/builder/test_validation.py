@@ -42,9 +42,16 @@ def test_real_people_rejected(name):
     assert real_person_issue(name)
 
 
-@pytest.mark.parametrize("name", ["Dana Kim", "Mr. Tan", "Alex Morgan", "Priya Raman"])
+@pytest.mark.parametrize("name", ["Dana Kim", "Mr. Tan", "Alex Morgan", "Priya Raman", "Walter Whitehead",
+                                  "Eleanor Vasquez", "Marcus Brodie"])
 def test_fictional_names_allowed(name):
     assert real_person_issue(name) is None
+
+
+@pytest.mark.parametrize("name", ["Eleanor Vance", "Marcus Brody", "Dr. Marcus Vance", "MARCUS VANCE",
+                                  "sherlock holmes", "Harry Potter", "Walter  White", "Mr. Walter White"])
+def test_well_known_fictional_characters_rejected(name):
+    assert "fictional character" in real_person_issue(name)
 
 
 def test_persona_issues_cover_name_and_pii():

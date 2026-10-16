@@ -72,11 +72,11 @@ SkillCoach uses seven Gemini agent roles: builder, precheck judge, persona, grou
 | Agent | Model (default) | What it does | Gemini features used |
 | --- | --- | --- | --- |
 | **Compliance Guard (precheck judge)** | `gemini-3.5-flash-lite` (`GEMINI_LITE_MODEL`, thinking `low`) | Screens the trainee's message against the scenario's compliance rules (e.g. "no guaranteed returns", "no medical diagnosis"). Runs on Send via `POST /api/sessions/{id}/precheck` (keyword pass + fast Gemini, target under 2 s, nothing stored) so a high-severity issue can be intercepted, and again inside the turn (`compliance_pre`) so the flag is recorded. Returns `ComplianceFlag` items `{rule_id, severity, message, quote}`; a flag whose quote is not in the message is dropped. | Structured output, low temperature |
-| **Customer persona agent** | `gemini-3.8-flash` (`GEMINI_FAST_MODEL`, thinking `low`) | Plays the customer: stays in character, pursues hidden needs, raises objections, and only references product facts retrieved from the knowledge base. The opening line is served verbatim with no model call. | Streaming, system instructions (persona), RAG context, multi-turn history |
+| **Customer persona agent** | `gemini-4-argon` (`GEMINI_FAST_MODEL`, thinking `low`) | Plays the customer: stays in character, pursues hidden needs, raises objections, and only references product facts retrieved from the knowledge base. The opening line is served verbatim with no model call. | Streaming, system instructions (persona), RAG context, multi-turn history |
 | **Compliance post-check (grounding)** | `gemini-3.5-flash-lite` | Checks the customer's reply for product claims that are not supported by the retrieved knowledge, so the AI customer does not teach wrong facts. Runs concurrently with state + coach and emits the `compliance_post` SSE event with `ComplianceFlag` items (`rule_id: "GROUNDING"`). | Structured output, grounding check against retrieved chunks |
 | **State** and **coach** (two agents) | `gemini-3.5-flash-lite` | Updates customer trust and patience, and gives one short, actionable hint for the next turn ("Acknowledge the cost concern before pitching ROI"), citing the playbook passage it relies on. | Structured output, RAG over playbooks |
-| **Report (scorer)** | `gemini-3.1-pro-preview` (`GEMINI_PRO_MODEL`, fallback `gemini-2.5-pro`) | At session end, scores each rubric dimension (e.g. discovery, objection handling, accuracy, empathy). Every score must quote the trainee's exact words. | Long context (full transcript + rubric + sources), structured output |
-| **Persona / scenario builder** | `gemini-3.8-flash` (thinking `low`) | Drafts personas and scenarios (compliance rules, rubric) from uploaded documents, with citations to the source passages. Drafts need human approval. Benchmarked against `gemini-3.1-pro-preview`: similar quality, 2-3x faster (3 personas in 12.8 s vs 25.3 s). | Structured output, parallel expansion, RAG over uploaded docs |
+| **Report (scorer)** | `gemini-4-argon` (`GEMINI_PRO_MODEL`; fallbacks `gemini-3.1-pro-preview`, `gemini-2.5-pro`) | At session end, scores each rubric dimension (e.g. discovery, objection handling, accuracy, empathy). Every score must quote the trainee's exact words. | Long context (full transcript + rubric + sources), structured output |
+| **Persona / scenario builder** | `gemini-4-argon` (thinking `low`) | Drafts personas and scenarios (compliance rules, rubric) from uploaded documents, with citations to the source passages. Drafts need human approval. Live timing PENDING re-measure on Argon. | Structured output, parallel expansion, RAG over uploaded docs |
 | **Retrieval** | `gemini-embedding-001` (`GEMINI_EMBED_MODEL`, 768 dims) | Embeds uploaded documents and queries for semantic search; results carry chunk-level citations. | `embed_content` |
 
 Locations (verified on 2026-10-15): Gemini generation runs on the Vertex AI `global` endpoint (`GOOGLE_CLOUD_LOCATION=global`), because the Gemini 3.x models are served only there. Embeddings (`GEMINI_EMBED_LOCATION=asia-east1`), the Cloud Run services and Firestore all run in `asia-east1`; regional embeddings take about 170 ms per query vs about 1.1 s on `us-central1`.
@@ -91,7 +91,7 @@ Guardrails, enforced in code rather than trusted to the model:
 ## Architecture
 
 ```
-Browser (Next.js)  ──HTTPS──>  FastAPI on Cloud Run  ──>  Vertex AI: Gemini Flash / Flash-Lite / Pro (global), Embeddings (asia-east1)
+Browser (Next.js)  ──HTTPS──>  FastAPI on Cloud Run  ──>  Vertex AI: Gemini 4 Argon / 3.5 Flash-Lite (global), Embeddings (asia-east1)
    text / voice                    Orchestrator                │
    report, dashboard               ├─ compliance pre-check     │
                                    ├─ customer persona (RAG) ──┤
@@ -120,9 +120,9 @@ GOOGLE_GENAI_USE_VERTEXAI=true
 GOOGLE_CLOUD_PROJECT=<your-project-id>
 GOOGLE_CLOUD_LOCATION=global
 GEMINI_EMBED_LOCATION=asia-east1
-GEMINI_FAST_MODEL=gemini-3.8-flash
+GEMINI_FAST_MODEL=gemini-4-argon
 GEMINI_LITE_MODEL=gemini-3.5-flash-lite
-GEMINI_PRO_MODEL=gemini-3.1-pro-preview
+GEMINI_PRO_MODEL=gemini-4-argon
 GEMINI_EMBED_MODEL=gemini-embedding-001
 STORE_BACKEND=memory
 CORS_ORIGINS=*
@@ -158,7 +158,7 @@ gcloud run deploy skillcoach-api --source backend --region asia-east1 --allow-un
 
 - **Frontend:** Next.js (React, TypeScript), Tailwind CSS; planned: Web Speech API, three-vrm, MediaPipe Face Landmarker
 - **Backend:** Python, FastAPI, Pydantic
-- **AI:** seven Gemini agent roles on `gemini-3.8-flash` (persona, builder), `gemini-3.5-flash-lite` (precheck, grounding, state, coach) and `gemini-3.1-pro-preview` (report; fallback `gemini-2.5-pro`), `gemini-embedding-001` (768 dims), via the `google-genai` SDK on Vertex AI; planned: Gemini Live API
+- **AI:** seven Gemini agent roles on `gemini-4-argon` (persona, builder, report) and `gemini-3.5-flash-lite` (precheck, grounding, state, coach), with automatic fallback chains to `gemini-3.8-flash`, `gemini-3.1-pro-preview` and `gemini-2.5-pro`, `gemini-embedding-001` (768 dims), via the `google-genai` SDK on Vertex AI; planned: Gemini Live API
 - **Data:** Firestore in `asia-east1` (sessions, knowledge chunks, vectors); in-memory store for local development
 - **Cloud:** Cloud Run, Artifact Registry, Cloud Build, Secret Manager, Cloud Logging
 

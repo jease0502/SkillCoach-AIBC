@@ -14,7 +14,7 @@ Locations at a glance (verified against the project on 2026-10-15):
 | What | Location | Why |
 |---|---|---|
 | Cloud Run (`skillcoach-api`, `skillcoach-web`), Firestore, Artifact Registry | `asia-east1` (`$REGION`, the gcloud default) | Data at rest in the chosen APAC region |
-| Gemini generation (`gemini-3.8-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-pro-preview`) | `global` (`GOOGLE_CLOUD_LOCATION`) | These models return 200 only on `global` (404 on `us-central1`) |
+| Gemini generation (`gemini-4-argon`, `gemini-3.5-flash-lite`; fallbacks `gemini-3.8-flash`, `gemini-3.1-pro-preview`) | `global` (`GOOGLE_CLOUD_LOCATION`) | These models return 200 only on `global` (404 on `us-central1`) |
 | Embeddings (`gemini-embedding-001`) | `asia-east1` (`GEMINI_EMBED_LOCATION`) | Regional model; about 170 ms from Cloud Run vs about 1.1 s on `us-central1` |
 
 `gemini-2.5-flash` and `gemini-2.5-pro` work on both `global` and
@@ -72,7 +72,7 @@ Quick model check before writing code (from your machine, with ADC):
 python - <<EOF
 from google import genai
 gen = genai.Client(vertexai=True, project="$PROJECT_ID", location="global")
-for m in ["gemini-3.8-flash", "gemini-3.1-pro-preview", "gemini-3.5-flash-lite", "gemini-2.5-pro"]:
+for m in ["gemini-4-argon", "gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.1-pro-preview", "gemini-2.5-pro"]:
     try:
         print(m, "->", gen.models.generate_content(model=m, contents="Say OK").text.strip())
     except Exception as e:
@@ -84,7 +84,8 @@ EOF
 ```
 
 Gemini 3.x models return 404 on `us-central1`; always test them on
-`global`. If `gemini-3.1-pro-preview` fails, set
+`global`. The fallback chains switch models automatically at runtime; if `gemini-4-argon` is unavailable for a
+whole deploy, you can also pin `GEMINI_FAST_MODEL=gemini-3.8-flash` and
 `GEMINI_PRO_MODEL=gemini-2.5-pro`.
 
 ---
@@ -216,7 +217,7 @@ gcloud run deploy skillcoach-api \
   --timeout 300 \
   --min-instances 0 --max-instances 3 \
   --cpu-boost \
-  --set-env-vars "GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GEMINI_EMBED_LOCATION=asia-east1,GEMINI_FAST_MODEL=gemini-3.8-flash,GEMINI_LITE_MODEL=gemini-3.5-flash-lite,GEMINI_PRO_MODEL=gemini-3.1-pro-preview,GEMINI_EMBED_MODEL=gemini-embedding-001,STORE_BACKEND=firestore,CORS_ORIGINS=*"
+  --set-env-vars "GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GEMINI_EMBED_LOCATION=asia-east1,GEMINI_FAST_MODEL=gemini-4-argon,GEMINI_LITE_MODEL=gemini-3.5-flash-lite,GEMINI_PRO_MODEL=gemini-3.1-pro-preview,GEMINI_EMBED_MODEL=gemini-embedding-001,STORE_BACKEND=firestore,CORS_ORIGINS=*"
 
 export API_URL=$(gcloud run services describe skillcoach-api --region $REGION --format='value(status.url)')
 curl -s $API_URL/healthz        # {"ok": true}
@@ -309,9 +310,10 @@ we set on Cloud Run; it may differ from the code default.
 | `GOOGLE_CLOUD_LOCATION` | api | `global` | `global` | Gemini 3.x models are served only from `global` |
 | `GEMINI_EMBED_LOCATION` | api | `asia-east1` | `asia-east1` | Embeddings endpoint, next to Cloud Run |
 | `GEMINI_API_KEY` | api | - | unset (secret if fallback) | From Secret Manager only |
-| `GEMINI_FAST_MODEL` | api | `gemini-3.8-flash` | `gemini-3.8-flash` | Customer persona and persona/scenario builder. See note below |
+| `GEMINI_FAST_MODEL` | api | `gemini-4-argon` | `gemini-4-argon` | Customer persona and persona/scenario builder. See note below |
+| `GEMINI_FAST_FALLBACKS` / `GEMINI_PRO_FALLBACKS` / `GEMINI_LITE_FALLBACKS` | api | `gemini-3.8-flash` / `gemini-3.1-pro-preview,gemini-2.5-pro` / `gemini-3.8-flash` | same | Tried in order on 404/429/5xx, timeout or invalid JSON; failed model cools down 60 s |
 | `GEMINI_LITE_MODEL` | api | `gemini-3.5-flash-lite` | `gemini-3.5-flash-lite` | Per-turn judgments: precheck, grounding, state, coach |
-| `GEMINI_PRO_MODEL` | api | `gemini-3.1-pro-preview` | `gemini-3.1-pro-preview` | Final report; fallback `gemini-2.5-pro` |
+| `GEMINI_PRO_MODEL` | api | `gemini-4-argon` | `gemini-4-argon` | Final report |
 | `GEMINI_EMBED_MODEL` | api | `gemini-embedding-001` | `gemini-embedding-001` | 768 dims; changing it requires re-ingest |
 | `EMBED_DIMENSIONS` | api | `768` | `768` | Embedding output size; must match the Firestore vector index (section 3) |
 | `STORE_BACKEND` | api | `memory` | `firestore` | `memory` loses data on restart |
@@ -352,10 +354,10 @@ load balancer is the alternative and is out of scope for the hackathon.
 
 - **Cloud Run:** scales to zero; `--min-instances 1` on both services costs a
   few dollars per day, so use it only around recording and judging.
-- **Gemini:** a turn is about 4 Flash calls plus 1 embedding call; a 12-turn
+- **Gemini:** a turn is 1 Argon call (persona) plus about 4 Flash-Lite calls and 1 embedding call; a 12-turn
   session plus the report is roughly 50-60 calls, typically cents per
-  session. The report uses the Pro model and dominates the cost; persona and
-  scenario generation use Flash (benchmarked 2-3x faster than Pro at similar quality); avoid regenerating them in loops. Check the Vertex AI
+  session. The report and persona/scenario generation use `gemini-4-argon` and
+  dominate the cost; avoid regenerating them in loops. Check the Vertex AI
   pricing page for current rates.
 - **Embeddings:** one-time per document; the demo corpus costs cents.
 - **Firestore:** the free tier covers the demo. Vector queries bill reads

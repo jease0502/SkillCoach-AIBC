@@ -6,12 +6,12 @@ Measured numbers come from the deployed build (Cloud Run `asia-east1`, real Gemi
 
 | Measurement | Value | Where it was measured |
 | --- | --- | --- |
-| Customer reply, full turn | about 4 s | live sessions, Scenario A and C |
-| First streamed token | about 2-3 s | lead's measurement on live |
-| Knowledge-base retrieval | 0.18 s | lead's measurement on live |
-| Compliance Guard (`/precheck`) | about 1 s (0.8-1.0 s across 14 live calls) | live sessions, Scenario A and C |
-| End-of-session report | under 12 s | lead's measurement on live |
-| Persona generation | 8-13 s (8.1 s from a brief, 12.8 s for 3 personas from documents) | real Gemini benchmark, 2026-10-15 |
+| Customer reply, full turn | 3.3-3.6 s (6.8 s on a turn with a compliance violation) | PENDING re-measure on `gemini-4-argon`; the values are from `gemini-3.8-flash` |
+| First streamed token | 1.7-2.0 s (5.5 s on a violating turn) | PENDING re-measure on `gemini-4-argon`; the values are from `gemini-3.8-flash` |
+| Knowledge-base retrieval | 0.17-0.24 s | live |
+| Compliance Guard (`/precheck`) | 0.8-1.3 s | live, `gemini-3.5-flash-lite` |
+| End-of-session report | 9.9 s (about 3 s when drafted speculatively during the session) | PENDING re-measure on `gemini-4-argon`; the values are from `gemini-3.8-flash` |
+| Persona / scenario generation | 9-14 s (9.1 s from a brief, 13.5 s for 3 personas from documents, 11.4 s for a scenario); 37 of 37 citations verified | PENDING re-measure on `gemini-4-argon`; the values are from `gemini-3.8-flash`, 2026-10-16 |
 | Scenario A (sales, high-score path) | overall **100**, compliance PASS, 2 of 2 live runs | [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
 | Scenario B (insurance, guaranteed return) | compliance **FAIL**, overall **26** (gate caps at 59) | live run in the browser on the deployed web app |
 | Scenario C (support escalation) | overall **81**, medium flag then recovery, 2 of 2 live runs | [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
@@ -108,9 +108,9 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 - Vertex AI: Gemini 3.x generation on the `global` endpoint (`google-genai` SDK); `gemini-embedding-001` in `asia-east1`, next to Cloud Run.
 - Firestore (`asia-east1`): documents, chunks with vectors, personas, scenarios, sessions, reports.
 
-**Speaker notes.** The system has no servers to manage and no custom model training. The frontend and API are stateless Cloud Run services that autoscale. Every turn is one HTTP request that streams events back to the browser: the compliance pre-check, the customer's reply token by token, the grounding post-check, the trust and patience meters, and the coach hint. Retrieval takes 0.18 seconds on the live service. Data at rest and embeddings stay in the APAC region we choose; Gemini generation runs through the Vertex AI global endpoint, and we say exactly that to buyers [S27].
+**Speaker notes.** The system has no servers to manage and no custom model training. The frontend and API are stateless Cloud Run services that autoscale. Every turn is one HTTP request that streams events back to the browser: the compliance pre-check, the customer's reply token by token, the grounding post-check, the trust and patience meters, and the coach hint. Retrieval takes about 0.2 seconds on the live service. Data at rest and embeddings stay in the APAC region we choose; Gemini generation runs through the Vertex AI global endpoint, and we say exactly that to buyers [S27].
 
-**Visual.** Architecture diagram: Browser → Cloud Run web → Cloud Run API → (Vertex AI Gemini `global`; `gemini-embedding-001` and Firestore in `asia-east1`). Underneath, the per-turn pipeline as a timeline: `precheck` (~1 s) → retrieval (0.18 s) → persona stream (first token ~2-3 s) → grounding + state + coach in parallel → `done` (~4 s).
+**Visual.** Architecture diagram: Browser → Cloud Run web → Cloud Run API → (Vertex AI Gemini `global`; `gemini-embedding-001` and Firestore in `asia-east1`). Underneath, the per-turn pipeline as a timeline: `precheck` (~1 s) → retrieval (~0.2 s) → persona stream (first token ~1.7-2.0 s) → grounding + state + coach in parallel → `done` (~3.5 s).
 
 **Criteria.** **T** (mandatory platform use, engineering quality).
 
@@ -122,21 +122,21 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 
 | Agent | Model | How | Guardrail |
 | --- | --- | --- | --- |
-| Persona & scenario builder | `gemini-3.8-flash`, thinking `low` | Structured output (Pydantic JSON schema); segments planned first, then personas expanded **in parallel** | Every citation's quote must appear verbatim in the cited chunk, or it is dropped; drafts need human approval |
+| Persona & scenario builder | `gemini-4-argon`, thinking `low` | Structured output (Pydantic JSON schema); segments planned first, then personas expanded **in parallel** | Every citation's quote must appear verbatim in the cited chunk, or it is dropped; drafts need human approval |
 | Compliance Guard (`/precheck`) | `gemini-3.5-flash-lite`, thinking `low` | Keyword pass plus structured JSON judge, about 1 s | Flag quote must be an exact span of the trainee's message |
-| Customer persona | `gemini-3.8-flash`, thinking `low` | **Streamed** text over SSE | Hidden needs withheld until trust is earned; only KB facts allowed |
+| Customer persona | `gemini-4-argon`, thinking `low` | **Streamed** text over SSE | Hidden needs withheld until trust is earned; only KB facts allowed |
 | Grounding post-check | `gemini-3.5-flash-lite` | Structured JSON, runs **in parallel** with state and coach | Flags product claims the retrieved passages don't support |
 | State (trust / patience) | `gemini-3.5-flash-lite` | Structured JSON | Deltas clamped; a high-severity violation always costs trust |
 | Coach | `gemini-3.5-flash-lite` | Structured JSON with KB citations | One sentence, grounded in the playbook |
-| Report scorer | `gemini-3.1-pro-preview` | Long-context structured output, under 12 s | Evidence must be a verbatim quote from the transcript; otherwise unverified and the dimension is capped at 50; any high-severity violation caps the score at 59 |
+| Report scorer | `gemini-4-argon` | Long-context structured output (timing PENDING re-measure on Argon) | Evidence must be a verbatim quote from the transcript; otherwise unverified and the dimension is capped at 50; any high-severity violation caps the score at 59 |
 
-- **Right model for the job:** Flash for the live conversation, Flash-Lite for per-turn judgments that must finish in about a second, Pro for the one call where depth matters (the report).
-- **Thinking control:** `low` on every turn agent keeps a full turn around 4 s. We benchmarked Flash against Pro for persona and scenario generation: Flash matched quality at 2-3x the speed (12.8 s vs 25.3 s for three personas).
+- **Right model for the job:** Gemini 4 Argon where quality shows (the customer's voice, the builder, the report); Flash-Lite for per-turn judgments that must finish in about a second. Every tier has an automatic fallback chain (Argon → 3.8 Flash; report → 3.1 Pro → 2.5 Pro), so a model outage degrades quality, not availability.
+- **Thinking control:** `low` on every agent keeps a full turn at 3.3-3.6 s with the first words in under 2 s (PENDING re-measure on Argon). We benchmark every model switch on the live service (Argon builder timing PENDING re-measure).
 - **Citation verification everywhere:** the model never decides on its own what counts as evidence. The server checks every quote against the source text.
 
 **Speaker notes.** This is the core of our technical story. Instead of one big prompt, each job is a separate Gemini call with its own system instructions and JSON schema, and the cheapest model that does the job well. Calls that don't depend on each other run in parallel. The compliance judge starts while retrieval and the reply run. After the reply, the grounding check, the state update and the coach hint all run at once. The most important design decision is that nothing the model claims as evidence is trusted. Persona citations, scenario rules and report quotes are all checked by the server against the documents or the transcript, and anything that doesn't match is dropped or marked unverified.
 
-**Visual.** The table above as a styled graphic, with the three model tiers color-coded (Flash, Flash-Lite, Pro) and small icons for "structured output", "streaming", "parallel".
+**Visual.** The table above as a styled graphic, with the model tiers color-coded (Gemini 4 Argon, Flash-Lite, fallbacks) and small icons for "structured output", "streaming", "parallel".
 
 **Criteria.** **T** (meaningful, non-trivial Gemini use; hallucination control; right model for the job).
 
@@ -179,12 +179,12 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 **Working today on managed Google Cloud; onboarding a new company means uploading documents, not writing code.**
 
 - **Feasible now:** deployed on Cloud Run with real Gemini; no custom model training; a new tenant uploads documents, approves generated personas and reviews a scenario.
-- **Scales:** stateless Cloud Run autoscaling, Firestore per tenant, Flash and Flash-Lite on every turn for cost; model cost is well under US$2 per seat per month at 8 sessions per rep **(estimate)**.
+- **Scales:** stateless Cloud Run autoscaling, Firestore per tenant, Flash-Lite for the per-turn judgments to keep cost down; model cost is well under US$2 per seat per month at 8 sessions per rep **(estimate)**.
 - **Honest limits:** live wording varies by run (behavior is anchored in seed rules and triggers); Gemini generation runs on the Vertex AI global endpoint while data at rest and embeddings stay in the APAC region [S27].
 
-**Speaker notes.** Everything shown is running on the live service. The numbers we measured there: about 1 second for the Compliance Guard, about 4 seconds per full turn with the first words in 2 to 3 seconds, and under 12 seconds for the report. On data residency we are deliberately precise: documents, transcripts, scores and embeddings stay in the chosen APAC region, Gemini generation goes through the Vertex AI global endpoint because that is where the Gemini 3.x models are served, and Vertex AI does not train on customer data [S27]. We never claim that data never leaves a country.
+**Speaker notes.** Everything shown is running on the live service. The numbers we measured there: about 1 second for the Compliance Guard, 3.3 to 3.6 seconds per full turn with the first words in under 2 seconds, and about 10 seconds for the report, or about 3 when it is drafted during the session. (PENDING re-measure on Argon.) On data residency we are deliberately precise: documents, transcripts, scores and embeddings stay in the chosen APAC region, Gemini generation goes through the Vertex AI global endpoint because that is where Gemini 4 Argon and the 3.x models are served, and Vertex AI does not train on customer data [S27]. We never claim that data never leaves a country.
 
-**Visual.** A latency strip from the live service: "Guard ~1 s · first token ~2-3 s · turn ~4 s · report < 12 s · persona generation 8-13 s". Below it, a small data-residency box: "At rest + embeddings: asia-east1 · Gemini generation: Vertex AI global".
+**Visual.** A latency strip from the live service: "Guard ~1 s · first token < 2 s · turn ~3.5 s · report ~10 s (~3 s speculative) · persona generation 9-14 s" (PENDING re-measure on Argon). Below it, a small data-residency box: "At rest + embeddings: asia-east1 · Gemini generation: Vertex AI global".
 
 **Criteria.** **T** (engineering quality, platform use); **I** (feasibility).
 

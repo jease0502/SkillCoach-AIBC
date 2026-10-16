@@ -12,7 +12,7 @@ Google Cloud AI Builder Cup 2026 (Hack2skill, JAPAC). **Deadline: 2026-10-18** (
 
 ## Mandatory technology
 
-- [ ] Uses Google AI models (Gemini via Vertex AI `google-genai` SDK: `gemini-3.8-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-pro-preview`, `gemini-embedding-001`; seven Gemini agent roles) as a core part of the solution
+- [ ] Uses Google AI models (Gemini via Vertex AI `google-genai` SDK: `gemini-4-argon`, `gemini-3.5-flash-lite`, `gemini-embedding-001`, with `gemini-3.8-flash` / `gemini-3.1-pro-preview` fallbacks; seven Gemini agent roles) as a core part of the solution
 - [x] Deployed on Cloud Run in `asia-east1`, with `GOOGLE_CLOUD_LOCATION=global` and `GEMINI_EMBED_LOCATION=asia-east1` (see [docs/deployment.md](docs/deployment.md)). Web: https://skillcoach-web-817759648389.asia-east1.run.app · API: https://skillcoach-api-817759648389.asia-east1.run.app
 - [ ] Repo shows where Gemini is called (README "How Gemini is used" section points to the code)
 

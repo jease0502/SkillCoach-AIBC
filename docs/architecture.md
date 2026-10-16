@@ -121,9 +121,10 @@ defaults below were verified against the project
 
 | Env var | Default | Used by |
 |---|---|---|
-| `GEMINI_FAST_MODEL` | `gemini-3.8-flash` | Customer persona (streamed), persona and scenario builder |
+| `GEMINI_FAST_MODEL` | `gemini-4-argon` | Customer persona (streamed), persona and scenario builder |
 | `GEMINI_LITE_MODEL` | `gemini-3.5-flash-lite` | Per-turn judgments: compliance pre-check, grounding post-check, state, coach |
-| `GEMINI_PRO_MODEL` | `gemini-3.1-pro-preview` (fallback `gemini-2.5-pro`) | Final report |
+| `GEMINI_PRO_MODEL` | `gemini-4-argon` | Final report |
+| `GEMINI_FAST_FALLBACKS` / `GEMINI_PRO_FALLBACKS` / `GEMINI_LITE_FALLBACKS` | `gemini-3.8-flash` / `gemini-3.1-pro-preview,gemini-2.5-pro` / `gemini-3.8-flash` | Tried in order when a tier's model fails |
 | `GEMINI_EMBED_MODEL` | `gemini-embedding-001` (768 dims via `output_dimensionality`) | KB ingest and search |
 | `GOOGLE_CLOUD_LOCATION` | `global` | All generation calls |
 | `GEMINI_EMBED_LOCATION` | `asia-east1` | Embedding calls |
@@ -131,19 +132,20 @@ defaults below were verified against the project
 
 Important notes:
 
-- **Locations are split.** `gemini-3.8-flash`, `gemini-3.5-flash-lite` and
+- **Locations are split.** `gemini-4-argon`, `gemini-3.8-flash`, `gemini-3.5-flash-lite` and
   `gemini-3.1-pro-preview` return 200 only on `location=global` (404 on
   `us-central1`). `gemini-embedding-001` is regional and is called in
   `asia-east1` (`GEMINI_EMBED_LOCATION`), next to Cloud Run: about 170 ms per
   query vs about 1.1 s cross-Pacific to `us-central1`. The wrapper keeps two clients.
 - **Gemini 2.5 is a fallback only.** `gemini-2.5-flash` and `gemini-2.5-pro`
   work on both `global` and `us-central1` in this project. `gemini-2.5-pro`
-  is the documented fallback for `GEMINI_PRO_MODEL`; the defaults stay on 3.x.
+  is the last fallback in the pro chain.
+- **Fallback chains.** Each tier has a fallback chain (`GEMINI_*_FALLBACKS`): fast `gemini-4-argon` → `gemini-3.8-flash`; pro `gemini-4-argon` → `gemini-3.1-pro-preview` → `gemini-2.5-pro`; lite `gemini-3.5-flash-lite` → `gemini-3.8-flash`. On 404/429/5xx, a timeout or invalid JSON the call moves to the next model, and the failed model cools down for 60 s.
 - `gemini-3.5-flash-lite` (`GEMINI_LITE_MODEL`) runs the per-turn judgments
   (compliance pre-check, grounding post-check, state, coach) so they finish in
   about a second.
-- The persona and scenario builder runs on `gemini-3.8-flash` with thinking
-  `low`. In a benchmark on the seed knowledge base (2026-10-15), Flash matched `gemini-3.1-pro-preview` on structure and citation coverage and was 2-3x faster (3 personas from documents 12.8 s vs 25.3 s; scenario 9.2 s vs 26.0 s).
+- The persona and scenario builder runs on `gemini-4-argon` with thinking
+  `low`. PENDING re-measure on `gemini-4-argon`. Measured on `gemini-3.8-flash` (live, 2026-10-16, nothing saved): 3 personas from documents in 13.5 s, a scenario in 11.4 s, a persona from a brief in 9.1 s, with every returned citation verified against the source text (37 of 37). (On 3.x, Flash had matched `gemini-3.1-pro-preview` at 2-3x the speed, 12.8 s vs 25.3 s for 3 personas.)
 - `gemini-embedding-001` returns 3072 dims by default; Firestore vector
   indexes cap at 2048. The `embed()` wrapper always passes
   `output_dimensionality=768` and normalizes the vectors.
@@ -284,7 +286,9 @@ Notes:
   is reached.
 
 Latency targets (text mode): first `customer_delta` within about 1.5 s,
-`done` within about 4 s. Every agent call has a timeout (about 8 s). If a
+`done` within about 4 s. Measured on live with `gemini-3.8-flash` (2026-10-16; PENDING re-measure on `gemini-4-argon`): first
+token 1.7-2.0 s and `done` in 3.3-3.6 s (5.5 s / 6.8 s on a turn with a compliance violation),
+retrieval 0.17-0.24 s, pre-check 0.8-1.3 s, report 9.9 s (about 3 s when drafted speculatively). Every agent call has a timeout (about 8 s). If a
 non-critical agent (post-check, scorer, coach) times out or returns an
 invalid schema, the orchestrator skips it, logs it, and the turn still
 completes. Only the customer agent is on the critical path; if it fails,

@@ -31,7 +31,7 @@ This document maps SkillCoach to the judging criteria, and contains the demo vid
 | Human in the loop | Personas generated from documents carry citations to the source passages and start as `draft`; a trainer approves them (`POST /api/personas/{id}/approve`). Only approved personas can back a scenario. |
 | Hallucination control | Scorer evidence is validated server-side: quoted text must exist in the transcript, citation IDs must exist in the knowledge base. Unmatched quotes are marked "unverified", never silently shown, and a dimension without verified evidence is capped at 50. |
 | Compliance gate | Any high-severity violation sets `compliance_passed = false` and caps the overall score at 59. A great conversation with one forbidden promise still fails, as it would in real life. |
-| Right model for the job | Seven Gemini agent roles (builder, precheck judge, persona, grounding, state, coach, report). `gemini-3.8-flash` (thinking `low`) for the streamed persona and the builder (benchmarked against Pro: similar quality, 2-3x faster); `gemini-3.5-flash-lite` for the per-turn judgments (precheck, grounding, state, coach); `gemini-3.1-pro-preview` (fallback `gemini-2.5-pro`) for the long-context report. See [DECK.md](DECK.md) slide 7. |
+| Right model for the job | Seven Gemini agent roles (builder, precheck judge, persona, grounding, state, coach, report). `gemini-4-argon` (thinking `low`) for the streamed persona, the builder and the long-context report; `gemini-3.5-flash-lite` for the per-turn judgments (precheck, grounding, state, coach); automatic fallback chains to `gemini-3.8-flash`, `gemini-3.1-pro-preview` and `gemini-2.5-pro`. See [DECK.md](DECK.md) slide 7. |
 | Mandatory platform use | Backend and frontend deployed on Cloud Run (`asia-east1`); Gemini via Vertex AI (`google-genai` SDK, `global` endpoint). Show the Cloud Run console and URL briefly. |
 | Engineering quality | Public repo with README, architecture doc, ADR, deployment guide; typed schemas (Pydantic); no secrets in repo. |
 
@@ -100,7 +100,7 @@ Export to PDF, English only. Keep each slide to one message.
    - Compliance risk. `[STAT: example fine or mis-selling penalty, source]`
 4. **Solution.** Upload knowledge, generate and approve personas, pick a scenario, practice with an AI customer, get real-time compliance and coaching, receive an evidence-based report with a compliance gate. One diagram of the user flow.
 5. **Demo.** Four screenshots: persona draft with citations and the Approve button; the Compliance Guard card ("Edit message" / "Send anyway"); grounded persona reply with citation; report with verified quoted evidence and "Compliance: failed". QR code / link to live URL and video.
-6. **Architecture.** Next.js and FastAPI on Cloud Run (`asia-east1`), Vertex AI Gemini (`gemini-3.8-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-pro-preview` on the `global` endpoint), `gemini-embedding-001` and Firestore (`asia-east1`). Per-turn pipeline diagram.
+6. **Architecture.** Next.js and FastAPI on Cloud Run (`asia-east1`), Vertex AI Gemini (`gemini-4-argon`, `gemini-3.5-flash-lite` on the `global` endpoint, with fallback chains), `gemini-embedding-001` and Firestore (`asia-east1`). Per-turn pipeline diagram.
 7. **How Gemini is used.** Table of the seven Gemini agent roles and retrieval: role, model, structured output, guardrail. Highlight evidence verification (quotes must exist in transcript, otherwise unverified and capped at 50; citations must exist in KB) and the compliance gate (high-severity violation fails, score capped at 59).
 8. **Community benefit & impact.**
    - Trainees: confidence and faster ramp-up; safe space to fail.
@@ -110,7 +110,7 @@ Export to PDF, English only. Keep each slide to one message.
    - Proposed pilot KPIs: time-to-first-solo-call, compliance flags per 100 turns, senior hours saved per new hire, trainee confidence (self-reported).
 9. **Feasibility.** Built entirely on managed Google Cloud services; working deployment today; no custom model training; onboarding a new company only requires uploading documents, approving generated personas and reviewing a scenario. Known limitations and mitigations (latency, hallucination guardrails, data privacy: data at rest in `asia-east1`, inference via the Vertex AI global endpoint).
 10. **Scalability & business model.**
-    - Technical: stateless Cloud Run autoscaling; Firestore scales with tenants; Flash for per-turn cost efficiency.
+    - Technical: stateless Cloud Run autoscaling; Firestore scales with tenants; Flash-Lite for per-turn cost efficiency.
     - Business: per-seat SaaS for teams; enterprise tier with SSO, region pinning for data at rest, LMS/CRM integration; scenario marketplace by industry.
     - Go-to-market: English-speaking APAC financial services first (Singapore insurance and bancassurance advisors under MAS fair-dealing rules), then Philippine and Hong Kong contact-center and advisor workforces; Taiwan, Japan and Korea as the expansion wave after localization ("English first, built to localize").
     - Cross-industry: sales, insurance, banking, support, retail, healthcare front desk.

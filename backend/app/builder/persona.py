@@ -11,7 +11,7 @@ from app.builder import _deps, prompts
 from app.builder.errors import GenerationError, NotFound, ValidationFailed
 from app.builder.grounding import CitationDraft, Grounding
 from app.builder.ids import new_id
-from app.builder.validation import apply_difficulty, normalize_locale, persona_issues
+from app.builder.validation import apply_difficulty, normalize_locale, persona_issues, real_person_issue
 from app.schemas import Citation, Objection, Persona, now
 
 log = logging.getLogger(__name__)
@@ -197,16 +197,21 @@ async def plan_segments(grounding: Grounding, count: int, locale: str) -> list[S
             continue
         except Exception as exc:
             raise GenerationError(f"Segment planning failed: {exc}") from exc
+        # The name is fixed here ("Name the persona exactly ..."), so famous names must be
+        # rejected at this step; the expansion retry could not change them.
         unique: list[SegmentCard] = []
         names: set[str] = set()
+        rejected: list[str] = []
         for seg in segments:
             key = seg.name.strip().casefold()
-            if key and key not in names:
+            if (issue := real_person_issue(seg.name)):
+                rejected.append(issue)
+            elif key and key not in names:
                 names.add(key)
                 unique.append(seg)
         if len(unique) >= count:
             return unique[:count]
-        errors = [f"return exactly {count} segments, each with a different persona name"]
+        errors = [f"return exactly {count} segments, each with a different persona name", *rejected]
     raise GenerationError("Segment planning failed: " + "; ".join(errors))
 
 
