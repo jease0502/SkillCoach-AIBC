@@ -1,0 +1,151 @@
+"""HTTP routes for practice sessions and the dashboard (docs/API_CONTRACT.md)."""
+from __future__ import annotations
+
+import json
+from collections import Counter, defaultdict
+
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+
+from app.schemas import (
+    ComplianceFlag, Dashboard, DimensionAverage, Persona, Report, Scenario, Session, SessionSummary, ViolationCount,
+)
+from app.session import deps, orchestrator
+from app.session.orchestrator import PERSONAS, REPORTS, SCENARIOS, SESSIONS, SessionError
+
+router = APIRouter(prefix="/api", tags=["sessions"])
+
+RECENT_SESSIONS = 10
+TOP_VIOLATIONS = 5
+READY_SCORE = 80
+SAMPLE_PREFIX = "sample-"
+
+
+class CreateSessionRequest(BaseModel):
+    scenario_id: str
+
+
+class TurnRequest(BaseModel):
+    text: str
+
+
+def _http(e: SessionError) -> HTTPException:
+    return HTTPException(status_code=e.status, detail=e.detail)
+
+
+@router.post("/sessions", response_model=Session)
+async def create_session(body: CreateSessionRequest) -> Session:
+    try:
+        return await orchestrator.create_session(body.scenario_id)
+    except SessionError as e:
+        raise _http(e)
+
+
+@router.get("/sessions", response_model=list[Session])
+async def list_sessions() -> list[Session]:
+    rows = [Session.model_validate(r) for r in await deps.get_store().list(SESSIONS)]
+    return sorted(rows, key=lambda s: s.started_at, reverse=True)
+
+
+@router.get("/sessions/{session_id}", response_model=Session)
+async def get_session(session_id: str) -> Session:
+    try:
+        return (await orchestrator.load_record(session_id)).session
+    except SessionError as e:
+        raise _http(e)
+
+
+@router.post("/sessions/{session_id}/turns")
+async def post_turn(session_id: str, body: TurnRequest) -> StreamingResponse:
+    try:
+        await orchestrator.validate_turn(session_id, body.text)
+    except SessionError as e:
+        raise _http(e)
+
+    async def sse():
+        async for event, data in orchestrator.run_turn(session_id, body.text):
+            yield f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(sse(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+class PrecheckResponse(BaseModel):
+    flags: list[ComplianceFlag]
+
+
+@router.post("/sessions/{session_id}/precheck", response_model=PrecheckResponse)
+async def precheck(session_id: str, body: TurnRequest) -> PrecheckResponse:
+    """Compliance Guard: judge a draft before it is sent. Nothing is stored in the session."""
+    try:
+        return PrecheckResponse(flags=await orchestrator.precheck_compliance(session_id, body.text))
+    except SessionError as e:
+        raise _http(e)
+
+
+@router.post("/sessions/{session_id}/end", response_model=Report)
+async def end_session(session_id: str) -> Report:
+    try:
+        return await orchestrator.end_session(session_id)
+    except SessionError as e:
+        raise _http(e)
+    except Exception:
+        raise HTTPException(status_code=502, detail="Report generation failed. Please try again.")
+
+
+@router.get("/sessions/{session_id}/report", response_model=Report)
+async def get_report(session_id: str) -> Report:
+    try:
+        return await orchestrator.get_report(session_id)
+    except SessionError as e:
+        raise _http(e)
+
+
+def is_sample(row: dict) -> bool:
+    return row.get("sample") is True or str(row.get("id", "")).startswith(SAMPLE_PREFIX)
+
+
+@router.get("/dashboard", response_model=Dashboard)
+async def dashboard() -> Dashboard:
+    """Aggregates only; no transcripts leave this endpoint."""
+    store = deps.get_store()
+    rows = await store.list(SESSIONS)
+    sessions = [Session.model_validate(r) for r in rows]
+    reports = {r["session_id"]: Report.model_validate(r) for r in await store.list(REPORTS)}
+    scenarios = {r["id"]: Scenario.model_validate(r) for r in await store.list(SCENARIOS)}
+    personas = {r["id"]: Persona.model_validate(r) for r in await store.list(PERSONAS)}
+
+    scored = [r for r in reports.values() if r.session_id in {s.id for s in sessions}]
+    by_dim: dict[str, list[int]] = defaultdict(list)
+    violations: Counter[str] = Counter()
+    messages: dict[str, str] = {}
+    for r in scored:
+        for d in r.dimensions:
+            by_dim[d.name].append(d.score)
+        for f in r.compliance_violations:
+            violations[f.rule_id] += 1
+            messages.setdefault(f.rule_id, f.message)
+
+    recent = sorted(sessions, key=lambda s: s.started_at, reverse=True)[:RECENT_SESSIONS]
+    return Dashboard(
+        sessions_count=len(sessions),
+        average_score=round(sum(r.overall_score for r in scored) / len(scored), 1) if scored else None,
+        ready_count=sum(1 for s in sessions if s.status == "ended" and s.id in reports
+                        and reports[s.id].compliance_passed and reports[s.id].overall_score >= READY_SCORE),
+        # Sample team data is aggregated like any session; this count lets the UI label it.
+        # (SessionSummary has no flag for it: the frontend tells by the "sample-" id prefix.)
+        sample_sessions_count=sum(1 for r in rows if is_sample(r)),
+        by_dimension=[DimensionAverage(name=n, average=round(sum(v) / len(v), 1)) for n, v in by_dim.items()],
+        top_violations=[ViolationCount(rule_id=k, message=messages[k], count=c)
+                        for k, c in violations.most_common(TOP_VIOLATIONS)],
+        recent_sessions=[
+            SessionSummary(
+                id=s.id,
+                scenario_title=scenarios[s.scenario_id].title if s.scenario_id in scenarios else "(deleted scenario)",
+                persona_name=personas[s.persona_id].name if s.persona_id in personas else "(deleted persona)",
+                overall_score=reports[s.id].overall_score if s.id in reports else None,
+                compliance_passed=reports[s.id].compliance_passed if s.id in reports else None,
+                started_at=s.started_at)
+            for s in recent],
+    )

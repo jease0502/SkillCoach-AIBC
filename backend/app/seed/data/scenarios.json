@@ -1,0 +1,227 @@
+[
+  {
+    "id": "scenario-saas-pricing",
+    "title": "SaaS pricing objection: the 30% gap",
+    "description": "A CFO pushes back on your Acme Analytics Pro quote. Find the real concern behind the price objection and agree a next step.",
+    "persona_id": "persona-dana-kim",
+    "trainee_goal": "Uncover the customer's real concern behind the price objection and propose a concrete next step.",
+    "context": "You are an Acme Analytics account executive on a scheduled call with the CFO of a 200-person logistics company. She has your Pro plan quote (USD 49 per user per month). Her company tried a cheaper analytics tool last year.",
+    "success_criteria": [
+      "The trainee asks about the previous tool before pitching.",
+      "The trainee addresses adoption with evidence (free pilot, onboarding, adoption data).",
+      "The customer agrees to a pilot kickoff with named participants and a date."
+    ],
+    "compliance_rules": [
+      {
+        "id": "PR-01",
+        "rule": "Do not offer any discount beyond the published volume pricing.",
+        "severity": "medium",
+        "citations": [{"document": "acme-product-sheet", "quote": "Sales representatives may not offer any discount beyond the published volume pricing without written approval from the sales director."}]
+      },
+      {
+        "id": "PR-02",
+        "rule": "Only quote prices, SLAs and certifications that appear in the product sheet.",
+        "severity": "medium",
+        "citations": [
+          {"document": "acme-product-sheet", "quote": "The Pro plan costs USD 49 per user per month, billed annually."},
+          {"document": "acme-product-sheet", "quote": "The Pro and Enterprise plans include a 99.9% uptime SLA"}
+        ]
+      }
+    ],
+    "rubric": [
+      {
+        "id": "discovery",
+        "name": "Discovery",
+        "description": "Asks open questions that uncover the real concern before pitching.",
+        "weight": 1.5,
+        "citations": [{"document": "sales-playbook", "quote": "Clarify: ask an open question to find the real concern behind the objection."}]
+      },
+      {
+        "id": "objection-handling",
+        "name": "Objection handling",
+        "description": "Acknowledges the objection, clarifies, and responds with value instead of arguing.",
+        "weight": 1.5,
+        "citations": [{"document": "sales-playbook", "quote": "Acknowledge and ask before you pitch."}]
+      },
+      {
+        "id": "accuracy",
+        "name": "Accuracy",
+        "description": "Uses correct product facts (pilot, SLA, certifications, adoption data) as evidence.",
+        "weight": 1.0,
+        "citations": [{"document": "acme-product-sheet", "quote": "Every Pro plan starts with a 30-day free pilot for up to 20 users."}]
+      },
+      {
+        "id": "closing",
+        "name": "Closing",
+        "description": "Ends with an agreed, specific next step with people and a date.",
+        "weight": 1.0,
+        "citations": [{"document": "sales-playbook", "quote": "Every call should end with an agreed next step, such as a pilot kickoff with named participants and a date."}]
+      }
+    ],
+    "branch_events": [
+      {"id": "evt-1", "trigger": "turn >= 6", "event": "Mentions that a cheaper competitor offered a 20% discount last week."},
+      {"id": "evt-2", "trigger": "trust >= 60", "event": "Asks how data security and uptime are handled."},
+      {"id": "evt-3", "trigger": "patience < 25", "event": "Says she has another meeting and tries to end the call."}
+    ],
+    "documents": ["acme-product-sheet", "sales-playbook"],
+    "difficulty": 3,
+    "max_turns": 12
+  },
+  {
+    "id": "scenario-insurance-compliance",
+    "title": "Retirement plan: the guaranteed-return trap",
+    "description": "A cautious retiree asks you to promise he won't lose money on an investment-linked plan. Stay compliant while understanding his real needs.",
+    "persona_id": "persona-mr-tan",
+    "trainee_goal": "Explain the Retirement Savings Plan honestly, without guarantees or pressure, and find out whether it suits the customer's needs.",
+    "context": "You are a licensed financial adviser meeting a recently retired customer at the branch. You can offer the Retirement Savings Plan, a variable investment-linked insurance plan. The Code of Conduct applies to everything you say.",
+    "success_criteria": [
+      "No guaranteed-return or guaranteed-principal claims are made.",
+      "The trainee discloses that the plan value can go down as well as up.",
+      "The trainee asks what the money is for and when it may be needed.",
+      "The trainee mentions the 15-day free-look period and does not push for a same-day decision."
+    ],
+    "compliance_rules": [
+      {
+        "id": "CC-01",
+        "rule": "Never promise or imply guaranteed returns or a guaranteed principal on investment-linked products.",
+        "severity": "high",
+        "citations": [
+          {"document": "code-of-conduct", "quote": "CC-01: Never promise or imply guaranteed returns or a guaranteed principal on investment-linked products."},
+          {"document": "code-of-conduct", "quote": "Prohibited examples: \"this plan guarantees you 8% a year\", \"your principal is guaranteed\", \"you can't lose money\", \"it's risk-free\"."}
+        ]
+      },
+      {
+        "id": "CC-02",
+        "rule": "Always disclose that the value of investments can go down as well as up.",
+        "severity": "high",
+        "citations": [{"document": "code-of-conduct", "quote": "CC-02: Always disclose that the value of investments can go down as well as up."}]
+      },
+      {
+        "id": "CC-03",
+        "rule": "Do not pressure the customer to decide in the same meeting.",
+        "severity": "medium",
+        "citations": [
+          {"document": "code-of-conduct", "quote": "CC-03: Do not pressure the customer to decide in the same meeting."},
+          {"document": "code-of-conduct", "quote": "Prohibited examples: \"you need to sign today\", \"the offer ends tonight\", \"this price is only for today\"."}
+        ]
+      },
+      {
+        "id": "CC-04",
+        "rule": "Ask about the customer's needs, time horizon and need for cash before recommending a product.",
+        "severity": "medium",
+        "citations": [{"document": "code-of-conduct", "quote": "CC-04: Ask about the customer's needs, time horizon and need for cash before recommending a product."}]
+      },
+      {
+        "id": "CC-05",
+        "rule": "Tell the customer about the 15-day free-look period before the application is signed.",
+        "severity": "low",
+        "citations": [{"document": "code-of-conduct", "quote": "CC-05: Tell the customer about the 15-day free-look period before the application is signed."}]
+      }
+    ],
+    "rubric": [
+      {
+        "id": "compliance",
+        "name": "Compliance",
+        "description": "Follows every Code of Conduct rule: no guarantees, risk disclosed, no pressure.",
+        "weight": 2.0,
+        "citations": [{"document": "code-of-conduct", "quote": "CC-01: Never promise or imply guaranteed returns or a guaranteed principal on investment-linked products."}]
+      },
+      {
+        "id": "accuracy",
+        "name": "Accuracy",
+        "description": "States product facts correctly: 5.2% historical average with the past-performance caveat, surrender charge, free-look period.",
+        "weight": 1.0,
+        "citations": [{"document": "retirement-brochure", "quote": "The plan's balanced fund has returned a historical average of 5.2% a year over the last ten years."}]
+      },
+      {
+        "id": "needs-discovery",
+        "name": "Needs discovery",
+        "description": "Asks what the money is for and when it may be needed, and checks suitability.",
+        "weight": 1.5,
+        "citations": [{"document": "retirement-brochure", "quote": "Customers who may need cash for near-term costs, such as medical bills, should keep that money in a liquid account."}]
+      },
+      {
+        "id": "empathy",
+        "name": "Empathy",
+        "description": "Recognises the customer's anxiety about losing savings and responds respectfully.",
+        "weight": 1.0,
+        "citations": []
+      }
+    ],
+    "branch_events": [
+      {"id": "evt-1", "trigger": "turn >= 3", "event": "Asks again, more anxiously, whether his money is safe."},
+      {"id": "evt-2", "trigger": "trust >= 60", "event": "Mentions that his wife has ongoing medical costs."},
+      {"id": "evt-3", "trigger": "trust < 30", "event": "Says he wants to think about it and talk to his son first."}
+    ],
+    "documents": ["retirement-brochure", "code-of-conduct"],
+    "difficulty": 2,
+    "max_turns": 12
+  },
+  {
+    "id": "scenario-support-escalation",
+    "title": "Support escalation: refund on day 41",
+    "description": "An angry customer demands a cash refund for headphones that broke after 41 days. De-escalate and resolve within policy.",
+    "persona_id": "persona-alex-morgan",
+    "trainee_goal": "De-escalate the customer and offer a resolution that follows the refund policy.",
+    "context": "You are a customer support agent at an electronics retailer's service desk. The customer bought wireless headphones 41 days ago, with a receipt. The Refund & Returns Policy and the Support tone guide apply.",
+    "success_criteria": [
+      "The trainee acknowledges the customer's frustration before explaining policy.",
+      "No cash refund is promised outside the 30-day window.",
+      "The trainee offers store credit, a warranty repair or supervisor escalation, with a time frame."
+    ],
+    "compliance_rules": [
+      {
+        "id": "RR-01",
+        "rule": "Do not promise or issue a cash refund for purchases older than 30 days. This customer bought the headphones 41 days ago, so any promise of a full or cash refund violates this rule.",
+        "severity": "medium",
+        "citations": [
+          {"document": "refund-policy", "quote": "RR-01: Cash refunds are only available within 30 days of purchase with a receipt."},
+          {"document": "refund-policy", "quote": "Agents must not promise or issue a cash refund for purchases older than 30 days."}
+        ]
+      },
+      {
+        "id": "RR-03",
+        "rule": "Escalate to a supervisor if the customer requests it or after two failed resolution attempts.",
+        "severity": "medium",
+        "citations": [{"document": "refund-policy", "quote": "RR-03: Escalate to a supervisor if the customer requests it or after two failed resolution attempts."}]
+      },
+      {
+        "id": "TONE-01",
+        "rule": "Never tell a customer to calm down or that it is not your fault.",
+        "severity": "low",
+        "citations": [{"document": "support-tone-guide", "quote": "Never tell a customer to calm down, and never say it is not your fault or not your problem."}]
+      }
+    ],
+    "rubric": [
+      {
+        "id": "policy-accuracy",
+        "name": "Policy accuracy",
+        "description": "Offers only what the refund policy allows: store credit, warranty repair or escalation outside 30 days.",
+        "weight": 1.5,
+        "citations": [{"document": "refund-policy", "quote": "RR-02: Outside 30 days, store credit may be offered at manager discretion."}]
+      },
+      {
+        "id": "empathy",
+        "name": "Empathy",
+        "description": "Acknowledges the customer's emotion before explaining policy.",
+        "weight": 1.5,
+        "citations": [{"document": "support-tone-guide", "quote": "Acknowledge the customer's emotion before you explain policy."}]
+      },
+      {
+        "id": "de-escalation",
+        "name": "De-escalation",
+        "description": "Offers clear options with a time frame and turns the conversation around.",
+        "weight": 1.0,
+        "citations": [{"document": "support-tone-guide", "quote": "Offer clear options and let the customer choose."}]
+      }
+    ],
+    "branch_events": [
+      {"id": "evt-1", "trigger": "patience < 30", "event": "Demands to speak to a manager."},
+      {"id": "evt-2", "trigger": "trust >= 35", "event": "Admits the headphones were a birthday gift for a friend."},
+      {"id": "evt-3", "trigger": "turn >= 6", "event": "Threatens to post a bad review online."}
+    ],
+    "documents": ["refund-policy", "support-tone-guide"],
+    "difficulty": 4,
+    "max_turns": 10
+  }
+]

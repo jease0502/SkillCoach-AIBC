@@ -1,0 +1,9 @@
+# Files excluded from the Cloud Build upload (infra/deploy-web.sh).
+.gcloudignore
+.git
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.env
+.env.local

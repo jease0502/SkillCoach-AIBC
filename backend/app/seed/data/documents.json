@@ -1,0 +1,8 @@
+[
+  {"key": "acme-product-sheet", "title": "Acme Analytics product sheet", "file": "acme-analytics-product-sheet.md"},
+  {"key": "sales-playbook", "title": "Sales playbook", "file": "sales-playbook.md"},
+  {"key": "retirement-brochure", "title": "Retirement Savings Plan brochure", "file": "retirement-savings-plan-brochure.md"},
+  {"key": "code-of-conduct", "title": "Code of Conduct", "file": "code-of-conduct.md"},
+  {"key": "refund-policy", "title": "Refund & Returns Policy", "file": "refund-returns-policy.md"},
+  {"key": "support-tone-guide", "title": "Support tone guide", "file": "support-tone-guide.md"}
+]

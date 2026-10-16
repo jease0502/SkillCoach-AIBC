@@ -1,0 +1,6 @@
+# Files excluded from `gcloud run deploy --source backend`.
+.env
+.venv/
+**/__pycache__/
+.pytest_cache/
+tests/

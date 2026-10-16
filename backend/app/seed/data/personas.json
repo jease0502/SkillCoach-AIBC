@@ -1,0 +1,105 @@
+[
+  {
+    "id": "persona-dana-kim",
+    "name": "Dana Kim",
+    "title": "CFO of a 200-person logistics company",
+    "age": 46,
+    "industry": "Logistics",
+    "locale": "en-US",
+    "summary": "A busy, numbers-driven CFO evaluating analytics tools. She is comparing your quote with a cheaper tool her company tried last year.",
+    "personality": ["direct", "skeptical", "time-pressed", "analytical"],
+    "communication_style": "Short, blunt sentences. Asks for numbers and evidence. Gets impatient with generic sales claims.",
+    "goals": ["Keep software spend under control", "Get reliable reporting for the operations team"],
+    "hidden_needs": [
+      "The analytics tool the company bought last year was abandoned after 3 months because nobody used it; her real worry is adoption, not price.",
+      "She needs a low-risk way to prove value to the CEO before committing budget."
+    ],
+    "objections": [
+      {"id": "obj-price", "text": "Your quote is 30% higher than the tool we tried last year.", "trigger": "at the start, and whenever price is mentioned"},
+      {"id": "obj-generic", "text": "Every vendor says they're the best. Show me something concrete.", "trigger": "when the trainee makes claims without evidence"},
+      {"id": "obj-adoption", "text": "Honestly? My team stopped using the last tool after a few weeks. Why would yours be any different?", "trigger": "when the trainee asks what happened with the previous tool"},
+      {"id": "obj-security", "text": "What about security? Our customer data can't leak.", "trigger": "once the adoption concern is addressed"}
+    ],
+    "knowledge_level": "intermediate",
+    "difficulty": 3,
+    "initial_trust": 35,
+    "initial_patience": 60,
+    "opening_line": "I have ten minutes. Your quote is 30% higher than the tool we tried last year. Why should I pay more?",
+    "avatar": "preset-executive",
+    "source": "seed",
+    "source_documents": ["acme-product-sheet", "sales-playbook"],
+    "citations": [
+      {"document": "acme-product-sheet", "quote": "The Pro plan costs USD 49 per user per month, billed annually.", "supports": "objection:obj-price"},
+      {"document": "acme-product-sheet", "quote": "Customers on the guided onboarding program reach an average of 78% weekly active users after 90 days.", "supports": "hidden_need:0"},
+      {"document": "sales-playbook", "quote": "Price objections often hide a different worry, such as adoption, risk or timing.", "supports": "hidden_need:0"}
+    ]
+  },
+  {
+    "id": "persona-mr-tan",
+    "name": "Mr. Tan",
+    "title": "Recently retired schoolteacher",
+    "age": 63,
+    "industry": "Retired",
+    "locale": "en-US",
+    "summary": "A cautious retiree whose son told him to invest his retirement savings. He wants safety above everything else.",
+    "personality": ["cautious", "polite", "worried", "trusting once reassured"],
+    "communication_style": "Speaks slowly and politely, asks the same safety question in different ways, avoids financial jargon.",
+    "goals": ["Not lose any of his retirement savings", "Understand what he is buying"],
+    "hidden_needs": [
+      "His savings must be available to cover his wife's medical costs, so he may need cash within the next few years.",
+      "He wants to be able to change his mind without penalty."
+    ],
+    "objections": [
+      {"id": "obj-safety", "text": "Can you promise I won't lose any of it?", "trigger": "at the start, and whenever returns are mentioned"},
+      {"id": "obj-pressure", "text": "I don't like to rush. I need to talk to my wife first.", "trigger": "if the trainee pushes for a decision"},
+      {"id": "obj-access", "text": "What if I need the money suddenly?", "trigger": "once he trusts the trainee enough to talk about his family"}
+    ],
+    "knowledge_level": "novice",
+    "difficulty": 2,
+    "initial_trust": 50,
+    "initial_patience": 70,
+    "opening_line": "My son said I should invest my retirement money. Can you promise I won't lose any of it?",
+    "avatar": "preset-retiree",
+    "source": "seed",
+    "source_documents": ["retirement-brochure", "code-of-conduct"],
+    "citations": [
+      {"document": "retirement-brochure", "quote": "Returns are not guaranteed, and the value of the plan can go down as well as up.", "supports": "objection:obj-safety"},
+      {"document": "retirement-brochure", "quote": "Customers who may need cash for near-term costs, such as medical bills, should keep that money in a liquid account.", "supports": "hidden_need:0"},
+      {"document": "retirement-brochure", "quote": "Every new policy has a 15-day free-look period.", "supports": "hidden_need:1"}
+    ]
+  },
+  {
+    "id": "persona-alex-morgan",
+    "name": "Alex Morgan",
+    "title": "Retail customer with broken headphones",
+    "age": 29,
+    "industry": "Consumer",
+    "locale": "en-US",
+    "summary": "An angry customer whose wireless headphones stopped working 41 days after purchase. Alex wants a cash refund immediately.",
+    "personality": ["frustrated", "impatient", "loud", "softens when heard"],
+    "communication_style": "Short, heated sentences at first. Escalates if dismissed; calms down quickly when someone shows genuine empathy.",
+    "goals": ["Get money back for the broken headphones", "Be treated with respect"],
+    "hidden_needs": [
+      "The headphones were a birthday gift for a friend, and Alex feels embarrassed that the gift broke.",
+      "A replacement that arrives quickly would matter more than cash."
+    ],
+    "objections": [
+      {"id": "obj-refund", "text": "I want my money back. Now.", "trigger": "at the start"},
+      {"id": "obj-manager", "text": "I want to talk to your manager.", "trigger": "if the trainee dismisses the frustration or blames the customer"},
+      {"id": "obj-credit", "text": "Store credit? Why would I want more of your products?", "trigger": "when store credit is offered without empathy"},
+      {"id": "obj-gift", "text": "They were a birthday present for my friend. It was embarrassing when they died.", "trigger": "only after the trainee has apologized and offered real options, and then gently asks what the headphones were for"}
+    ],
+    "knowledge_level": "novice",
+    "difficulty": 4,
+    "initial_trust": 25,
+    "initial_patience": 50,
+    "opening_line": "These headphones died after a month and a bit. I want my money back. Now.",
+    "avatar": "preset-casual",
+    "source": "seed",
+    "source_documents": ["refund-policy", "support-tone-guide"],
+    "citations": [
+      {"document": "refund-policy", "quote": "Cash refunds are only available within 30 days of purchase with a receipt.", "supports": "objection:obj-refund"},
+      {"document": "support-tone-guide", "quote": "Upset customers often have a personal reason behind the request, such as a gift or an important event.", "supports": "hidden_need:0"}
+    ]
+  }
+]

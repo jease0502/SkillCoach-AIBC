@@ -1,0 +1,33 @@
+# secrets
+.env
+.env.*
+!.env.example
+*adc.json
+*credentials*.json
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# node
+node_modules/
+.next/
+out/
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# large media (demo video, deck renders)
+media/*.mp4
+media/*.webm
+media/*.wav
+media/*.mp3
+media/**/raw/
+bench-reports/
+media/build/
