@@ -1,0 +1,9 @@
+Created with the image generation tool and saved in the current directory. Visually checked: no text, letters, numbers, logos, or UI text.
+
+| File | Pixel size |
+|---|---:|
+| [thumb_bg.png](D:/github/SkillCoach-AIBC/media/brand/thumb_bg.png) | 1600 × 900 |
+| [social_bg.png](D:/github/SkillCoach-AIBC/media/brand/social_bg.png) | 1600 × 800 |
+| [problem.png](D:/github/SkillCoach-AIBC/media/brand/problem.png) | 1600 × 900 |
+
+[Generation prompts](D:/github/SkillCoach-AIBC/media/brand/image-generation-prompts.md)

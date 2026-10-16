@@ -1,3 +1,5 @@
+![SkillCoach: AI role-play coach built with Gemini 4 on Google Cloud](media/brand/github_social_preview.png)
+
 # SkillCoach
 
 **An AI role-play coach that turns your company's own knowledge into realistic, compliance-safe practice conversations, powered by Gemini on Cloud Run.**
