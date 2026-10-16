@@ -26,7 +26,7 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 
 - AI customers built from your company's own documents, a Compliance Guard on every message, and scores that quote your words.
 - Google Cloud AI Builder Cup 2026, theme: Future of Work & Enterprise Productivity.
-- `[Team name]` · live demo https://skillcoach-web-817759648389.asia-east1.run.app · video `[URL]` · GitHub `[URL]`
+- `[Team name]` · live demo https://skillcoach-web-817759648389.asia-east1.run.app · video `[URL]` · GitHub https://github.com/jease0502/SkillCoach-AIBC
 
 **Speaker notes.** Customer-facing work is one of the largest parts of the workforce, and new hires still learn it on real customers. SkillCoach gives every new hire a realistic practice customer and a coach, built from the company's own manuals and rulebooks, and running on Gemini and Cloud Run today. Everything in this deck is in the deployed build unless it is labeled "planned".
 
@@ -212,7 +212,7 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 
 - **Next (planned):** voice with the Gemini Live API, a VRM avatar, on-device emotion cues, more APAC languages.
 - **Later (planned):** LMS and CRM integration, scenarios from anonymized real calls, certification tracks, calibration against senior assessors.
-- **Team:** `[Name, role, one-line background]` × N · live demo https://skillcoach-web-817759648389.asia-east1.run.app · video `[URL]` · GitHub `[URL]`
+- **Team:** `[Name, role, one-line background]` × N · live demo https://skillcoach-web-817759648389.asia-east1.run.app · video `[URL]` · GitHub https://github.com/jease0502/SkillCoach-AIBC
 
 **Speaker notes.** Everything under "Now" is in the deployed build and in the video. Everything else is labeled planned, and the next step is a paid 8-week pilot with a control cohort and pre-agreed KPIs. SkillCoach: practice the conversation before it counts.
 
@@ -232,4 +232,4 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 | UX & Solution Design (10%) | 4 Solution, 5 Demo, 12 Roadmap |
 | Theme: Future of Work | 1, 2, 9 |
 
-Before export: replace the remaining `[...]` placeholders (team name, members, video URL, GitHub URL), add the source list ([BUSINESS_CASE.md](BUSINESS_CASE.md) section 12, S1-S30 as cited) as the final page, and take screenshots from the live Cloud Run URL, not localhost.
+Before export: replace the remaining `[...]` placeholders (team name, members, video URL), add the source list ([BUSINESS_CASE.md](BUSINESS_CASE.md) section 12, S1-S30 as cited) as the final page, and take screenshots from the live Cloud Run URL, not localhost.

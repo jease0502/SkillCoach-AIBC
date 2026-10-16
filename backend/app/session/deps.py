@@ -85,7 +85,9 @@ def _settings():
 
 
 def fast_model() -> str:
-    return _settings().gemini_fast_model
+    # Tier alias, not a model id: fast and pro may share a primary model, and the alias keeps each
+    # call on its own fallback chain in app.llm.gemini (fast: flash models only).
+    return "fast"
 
 
 def lite_model() -> str:
@@ -98,7 +100,8 @@ def pro_model() -> str:
 
 
 def report_model() -> str:
-    return _env("SESSION_REPORT_MODEL", "") or pro_model()
+    """SESSION_REPORT_MODEL if set, else the "pro" tier alias (falls back to pro models, not flash)."""
+    return _env("SESSION_REPORT_MODEL", "") or "pro"
 
 
 def llm_fake() -> bool:

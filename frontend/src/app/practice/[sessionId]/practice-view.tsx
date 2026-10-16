@@ -676,18 +676,26 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
             {hints.length === 0 ? (
               <p className="text-sm text-slate-500">Hints appear here after each reply. Start by acknowledging what the customer said.</p>
             ) : (
-              <ol className="flex flex-col gap-3" aria-label="Coach hints, newest first">
-                {hints.slice(0, 4).map((h, i) => (
-                  <li
-                    key={`${hints.length - i}`}
-                    className={cn('rounded-lg p-3 text-sm', i === 0 ? 'animate-fade-up border border-amber-200 bg-amber-50 text-slate-900' : 'bg-slate-50 text-slate-600')}
-                  >
-                    {h.technique && <div className={cn('mb-1 text-xs font-semibold uppercase tracking-wide', i === 0 ? 'text-amber-900' : 'text-slate-500')}>{h.technique}</div>}
-                    <p className="leading-relaxed">{h.hint}</p>
-                    {i === 0 && <CitationList citations={h.citations} className="mt-2" />}
-                  </li>
-                ))}
-              </ol>
+              <div aria-label="Coach hints, newest first" role="group">
+                <div key={hints.length} className="animate-fade-up rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-slate-900">
+                  {hints[0].technique && <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-amber-900">{hints[0].technique}</div>}
+                  <p className="leading-relaxed">{hints[0].hint}</p>
+                  <CitationList citations={hints[0].citations} className="mt-2" />
+                </div>
+                {hints.length > 1 && (
+                  <details className="group mt-2 text-sm">
+                    <summary className="cursor-pointer rounded text-xs font-medium text-slate-600 hover:text-slate-900">Earlier hints ({hints.length - 1})</summary>
+                    <ol className="mt-2 flex flex-col gap-2">
+                      {hints.slice(1).map((h, i) => (
+                        <li key={`${hints.length - 1 - i}`} className="rounded-lg bg-slate-50 p-3 text-slate-600">
+                          {h.technique && <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{h.technique}</div>}
+                          <p className="leading-relaxed">{h.hint}</p>
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                )}
+              </div>
             )}
           </Card>
 

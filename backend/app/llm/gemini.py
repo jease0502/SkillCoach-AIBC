@@ -11,6 +11,7 @@ import hashlib
 import logging
 import math
 import random
+import time
 import types as pytypes
 import typing
 from collections.abc import AsyncIterator, Awaitable, Callable
@@ -112,20 +113,109 @@ def _backoff(attempt: int) -> float:
     return min(8.0, 0.5 * 2 ** (attempt - 1)) + random.uniform(0, 0.3)
 
 
-async def _with_retry(fn: Callable[[], Awaitable[R]], what: str,
-                      model: str = "", thinking: Thinking = None) -> R:
+async def _with_retry(fn: Callable[[], Awaitable[R]], what: str) -> R:
+    """Retry one call with exponential backoff (used for embeddings, which have no fallback chain)."""
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
             return await fn()
         except Exception as exc:  # noqa: BLE001 - the SDK raises several unrelated types
-            if attempt < MAX_ATTEMPTS and _drop_thinking(exc, model, thinking):
-                continue
             if attempt == MAX_ATTEMPTS or not _is_retryable(exc):
                 raise
             delay = _backoff(attempt)
             log.warning("%s failed (attempt %d/%d): %s; retrying in %.1fs", what, attempt, MAX_ATTEMPTS, exc, delay)
             await asyncio.sleep(delay)
     raise RuntimeError("unreachable")
+
+
+# ---------- model fallback chains ----------
+
+TIERS = ("fast", "pro", "lite")
+CHAIN_ROUNDS = 2  # walk the chain twice (with a short pause) before giving up
+_cooldown_until: dict[str, float] = {}  # model -> monotonic time it may be tried first again
+
+
+def _tier_chain(tier: str) -> list[str]:
+    s = get_settings()
+    fallbacks = getattr(s, f"gemini_{tier}_fallbacks", "")
+    return [getattr(s, f"gemini_{tier}_model")] + [m.strip() for m in fallbacks.split(",") if m.strip()]
+
+
+def model_chain(model: str | None) -> list[str]:
+    """Models to try, in order, for a request.
+
+    `model` may be a tier alias ("fast", "pro", "lite") or a concrete model id. A
+    concrete id that is some tier's primary model inherits that tier's fallbacks;
+    if several tiers share it (fast and pro may both be gemini-4-argon) their
+    fallbacks are merged in tier order, so the faster fallback is tried first.
+    """
+    model = model or "fast"
+    if model in TIERS:
+        chain = _tier_chain(model)
+    else:
+        chain = [model]
+        for tier in TIERS:
+            tier_chain = _tier_chain(tier)
+            if tier_chain[0] == model:
+                chain += tier_chain[1:]
+    return list(dict.fromkeys(chain))
+
+
+def _available(chain: list[str]) -> list[str]:
+    """Skip models cooling down after a failure; if all are cooling, try them all anyway."""
+    now = time.monotonic()
+    ready = [m for m in chain if _cooldown_until.get(m, 0.0) <= now]
+    return ready or chain
+
+
+def _should_fall_back(exc: Exception) -> bool:
+    """Outages and capacity errors move on to the next model; caller errors (400) do not."""
+    code = _status(exc)
+    if code is not None:
+        return code in (404, 408, 429) or code >= 500
+    return isinstance(exc, (asyncio.TimeoutError, TimeoutError, ConnectionError, OSError, ValueError))
+
+
+def _cool_down(model: str, exc: Exception) -> None:
+    if _status(exc) is None and isinstance(exc, ValueError):
+        return  # a malformed answer is not an outage; don't bench the model
+    _cooldown_until[model] = time.monotonic() + get_settings().gemini_cooldown_seconds
+
+
+def _note_success(what: str, chain: list[str], used: str) -> None:
+    _cooldown_until.pop(used, None)
+    if used != chain[0]:
+        log.warning("%s served by fallback model %s (primary %s unavailable)", what, used, chain[0])
+
+
+async def _run_chain(what: str, model: str | None, thinking: Thinking,
+                     call: Callable[[str], Awaitable[R]]) -> R:
+    """Run `call(model_id)` along the fallback chain until one model succeeds."""
+    chain = model_chain(model)
+    timeout = get_settings().gemini_timeout_seconds
+    last_exc: Exception | None = None
+    for round_ in range(CHAIN_ROUNDS):
+        for m in _available(chain) if round_ == 0 else chain:
+            while True:  # loops only to retry the same model with a downgraded thinking config
+                try:
+                    # asyncio.timeout keeps the call in this task (streams opened here are read here).
+                    async with asyncio.timeout(timeout):
+                        result = await call(m)
+                except Exception as exc:  # noqa: BLE001 - the SDK raises several unrelated types
+                    if _drop_thinking(exc, m, thinking):
+                        continue
+                    if not _should_fall_back(exc):
+                        raise
+                    last_exc = exc
+                    _cool_down(m, exc)
+                    log.warning("%s: model %s failed (%s: %s); trying next model",
+                                what, m, type(exc).__name__, str(exc)[:200])
+                    break
+                _note_success(what, chain, m)
+                return result
+        if round_ + 1 < CHAIN_ROUNDS:
+            await asyncio.sleep(_backoff(2))
+    assert last_exc is not None
+    raise last_exc
 
 
 def _config(*, model: str, system: str | None, temperature: float | None = None,
@@ -153,28 +243,30 @@ async def generate_json(prompt: str, schema: type[T], *, system: str | None = No
                         thinking: Thinking = None) -> T:
     """Generate a structured response validated against `schema`.
 
-    thinking: "off" / "low" trade reasoning depth for latency; "default" keeps the model's own setting.
+    model: a model id or a tier alias ("fast", "pro", "lite"); defaults to the fast tier.
+        Failures fall back along the tier's chain (see `model_chain`).
+    thinking: None / "default" keep the model's own setting; "off"|"minimal"|"low"|"medium"|"high"
+        trade reasoning depth for latency.
     """
     s = get_settings()
     if s.llm_fake:
         return _fake_instance(schema)
-    model = model or s.gemini_fast_model
 
-    async def call() -> T:
+    async def call(m: str) -> T:
         resp = await _client().aio.models.generate_content(
-            model=model,
+            model=m,
             contents=prompt,
-            config=_config(model=model, system=system, temperature=temperature, schema=schema, thinking=thinking),
+            config=_config(model=m, system=system, temperature=temperature, schema=schema, thinking=thinking),
         )
         parsed = resp.parsed
         if isinstance(parsed, schema):
             return parsed
         text = resp.text or ""
         if not text:
-            raise ValueError("Gemini returned an empty JSON response")
+            raise ValueError(f"{m} returned an empty JSON response")
         return schema.model_validate_json(text)
 
-    return await _with_retry(call, "generate_json", model, thinking)
+    return await _run_chain("generate_json", model, thinking, call)
 
 
 async def generate_text(prompt: str, *, system: str | None = None, model: str | None = None,
@@ -182,20 +274,24 @@ async def generate_text(prompt: str, *, system: str | None = None, model: str | 
     s = get_settings()
     if s.llm_fake:
         return _fake_text(prompt)
-    model = model or s.gemini_fast_model
 
-    async def call() -> str:
+    async def call(m: str) -> str:
         resp = await _client().aio.models.generate_content(
-            model=model, contents=prompt, config=_config(model=model, system=system, thinking=thinking),
+            model=m, contents=prompt, config=_config(model=m, system=system, thinking=thinking),
         )
         return resp.text or ""
 
-    return await _with_retry(call, "generate_text", model, thinking)
+    return await _run_chain("generate_text", model, thinking, call)
 
 
 async def stream_text(prompt: str | list, *, system: str | None = None,
                       model: str | None = None, thinking: Thinking = None) -> AsyncIterator[str]:
-    """Yield text chunks as they arrive. Retries only if nothing has been yielded yet."""
+    """Yield text chunks as they arrive.
+
+    Opening the stream and waiting for its first chunk go through the fallback chain
+    (bounded by GEMINI_FIRST_CHUNK_TIMEOUT_SECONDS); once text has been yielded, a
+    later error is raised to the caller because the output cannot be un-sent.
+    """
     s = get_settings()
     if s.llm_fake:
         last = prompt if isinstance(prompt, str) else str(prompt[-1] if prompt else "")
@@ -203,27 +299,28 @@ async def stream_text(prompt: str | list, *, system: str | None = None,
             yield word + " "
             await asyncio.sleep(0)
         return
-    model = model or s.gemini_fast_model
 
-    for attempt in range(1, MAX_ATTEMPTS + 1):
-        yielded = False
-        try:
+    async def open_stream(m: str) -> tuple[str, Any]:
+        async def first_chunk() -> tuple[str, Any]:
             stream = await _client().aio.models.generate_content_stream(
-                model=model, contents=prompt, config=_config(model=model, system=system, thinking=thinking),
+                model=m, contents=prompt, config=_config(model=m, system=system, thinking=thinking),
             )
-            async for chunk in stream:
+            it = stream.__aiter__()
+            async for chunk in it:
                 if chunk.text:
-                    yielded = True
-                    yield chunk.text
-            return
-        except Exception as exc:  # noqa: BLE001
-            if not yielded and attempt < MAX_ATTEMPTS and _drop_thinking(exc, model, thinking):
-                continue
-            if yielded or attempt == MAX_ATTEMPTS or not _is_retryable(exc):
-                raise
-            delay = _backoff(attempt)
-            log.warning("stream_text failed (attempt %d/%d): %s; retrying in %.1fs", attempt, MAX_ATTEMPTS, exc, delay)
-            await asyncio.sleep(delay)
+                    return chunk.text, it
+            return "", None  # the model finished without any text
+
+        async with asyncio.timeout(s.gemini_first_chunk_timeout_seconds):
+            return await first_chunk()
+
+    first, rest = await _run_chain("stream_text", model, thinking, open_stream)
+    if first:
+        yield first
+    if rest is not None:
+        async for chunk in rest:
+            if chunk.text:
+                yield chunk.text
 
 
 async def embed(texts: list[str], *, task: str = "RETRIEVAL_DOCUMENT") -> list[list[float]]:

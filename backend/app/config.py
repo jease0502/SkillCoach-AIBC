@@ -15,10 +15,20 @@ class Settings(BaseSettings):
     google_cloud_location: str = Field("global", alias="GOOGLE_CLOUD_LOCATION")
     gemini_api_key: str | None = Field(None, alias="GEMINI_API_KEY")
 
-    gemini_fast_model: str = Field("gemini-3.8-flash", alias="GEMINI_FAST_MODEL")
-    gemini_pro_model: str = Field("gemini-3.1-pro-preview", alias="GEMINI_PRO_MODEL")
+    # gemini-4-argon is served from location=global only.
+    gemini_fast_model: str = Field("gemini-4-argon", alias="GEMINI_FAST_MODEL")
+    gemini_pro_model: str = Field("gemini-4-argon", alias="GEMINI_PRO_MODEL")
     # Cheapest/fastest tier for per-turn bookkeeping (state, coach hints).
     gemini_lite_model: str = Field("gemini-3.5-flash-lite", alias="GEMINI_LITE_MODEL")
+
+    # Comma-separated fallbacks tried in order when a tier's model returns 404/429/5xx,
+    # times out, or a stream fails before its first chunk. See app/llm/gemini.py.
+    gemini_fast_fallbacks: str = Field("gemini-3.8-flash", alias="GEMINI_FAST_FALLBACKS")
+    gemini_pro_fallbacks: str = Field("gemini-3.1-pro-preview,gemini-2.5-pro", alias="GEMINI_PRO_FALLBACKS")
+    gemini_lite_fallbacks: str = Field("gemini-3.8-flash", alias="GEMINI_LITE_FALLBACKS")
+    gemini_cooldown_seconds: float = Field(60.0, alias="GEMINI_COOLDOWN_SECONDS")
+    gemini_timeout_seconds: float = Field(90.0, alias="GEMINI_TIMEOUT_SECONDS")
+    gemini_first_chunk_timeout_seconds: float = Field(20.0, alias="GEMINI_FIRST_CHUNK_TIMEOUT_SECONDS")
     gemini_embed_model: str = Field("gemini-embedding-001", alias="GEMINI_EMBED_MODEL")
     # Gemini 3.x models only serve from "global"; the embedding model is regional, so keep it
     # next to Cloud Run (asia-east1: ~170 ms warm vs ~1.1 s cross-Pacific to us-central1).

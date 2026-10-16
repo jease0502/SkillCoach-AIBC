@@ -5,6 +5,7 @@
 > Google Cloud AI Builder Cup 2026 entry, theme: *Future of Work & Enterprise Productivity*
 
 - **Live demo:** https://skillcoach-web-817759648389.asia-east1.run.app
+- **Source code:** https://github.com/jease0502/SkillCoach-AIBC
 - **API:** https://skillcoach-api-817759648389.asia-east1.run.app (public, for example `GET /api/scenarios`)
 - **Demo video (< 3 min):** `TODO: https://youtu.be/<id>`
 - **Pitch deck (PDF):** `TODO: docs/SkillCoach-deck.pdf` (content: [docs/DECK.md](docs/DECK.md))
@@ -109,7 +110,7 @@ Full details, sequence diagrams and data model: [docs/architecture.md](docs/arch
 Prerequisites: Node.js 20+, Python 3.12, a Google Cloud project with Vertex AI enabled, and `gcloud auth application-default login`. Environment variable names and defaults come from [docs/API_CONTRACT.md](docs/API_CONTRACT.md).
 
 ```bash
-git clone https://github.com/<org>/SkillCoach-AIBC.git
+git clone https://github.com/jease0502/SkillCoach-AIBC.git
 cd SkillCoach-AIBC
 
 # Backend (settings are read from backend/.env)

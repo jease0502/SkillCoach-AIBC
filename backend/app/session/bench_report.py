@@ -71,8 +71,10 @@ def build_case() -> tuple[Scenario, Persona, list[Turn]]:
 
 async def main(repeat: int, out: Path | None, only: list[str] | None) -> None:
     scenario, persona, turns = build_case()
-    models = {"pro": deps.pro_model(), "fast": deps.fast_model()}
-    print(f"rubric={[r.id for r in scenario.rubric]} turns={len(turns)} models={models}\n")
+    from app.llm.gemini import model_chain
+    models = {"pro": "pro", "fast": deps.fast_model()}  # tier aliases; print the real models behind them
+    chains = {tier: " -> ".join(model_chain(alias)) for tier, alias in models.items()}
+    print(f"rubric={[r.id for r in scenario.rubric]} turns={len(turns)} fallback chains={chains}\n")
     print(f"{'config':26} {'secs':>6}  overall  pass  verified/evidence  dimensions")
     for label, model, thinking, parallel in CONFIGS:
         if only and label not in only:

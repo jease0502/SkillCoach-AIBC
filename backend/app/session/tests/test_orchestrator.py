@@ -111,6 +111,7 @@ def llm(monkeypatch) -> FakeLLM:
     monkeypatch.setattr(deps, "get_store", lambda: store)
     monkeypatch.setattr(deps, "fast_model", lambda: "fast-model")
     monkeypatch.setattr(deps, "pro_model", lambda: "pro-model")
+    monkeypatch.setattr(deps, "report_model", lambda: "pro-model")
     monkeypatch.setattr(deps, "lite_model", lambda: "lite-model")
     monkeypatch.setattr(deps, "llm_fake", lambda: False)
     monkeypatch.setattr(deps, "REPORT_PARALLEL", True)
@@ -777,3 +778,11 @@ def test_dashboard_counts_sample_sessions_in_aggregates(llm):
     assert d["sessions_count"] == 3 and d["sample_sessions_count"] == 2  # flag or "sample-" prefix
     assert d["average_score"] == 70.0                                    # samples are aggregated
     assert {s["id"] for s in d["recent_sessions"]} == {"sample-a1", "sample-a2", "real1"}
+
+
+def test_deps_use_tier_aliases_for_fallback_chains(monkeypatch):
+    monkeypatch.delenv("SESSION_REPORT_MODEL", raising=False)
+    assert deps.fast_model() == "fast"
+    assert deps.report_model() == "pro"
+    monkeypatch.setenv("SESSION_REPORT_MODEL", "gemini-3.1-pro-preview")
+    assert deps.report_model() == "gemini-3.1-pro-preview"  # explicit override still wins

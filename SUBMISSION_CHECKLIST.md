@@ -20,7 +20,7 @@ Google Cloud AI Builder Cup 2026 (Hack2skill, JAPAC). **Deadline: 2026-10-18** (
 
 - [ ] **Deployed link** (https://skillcoach-web-817759648389.asia-east1.run.app) pasted into the form (already in README)
 - [ ] **Demo video** under 3 minutes, uploaded to YouTube / Vimeo / public Google Drive, link in form and README
-- [ ] **Public GitHub repository** link in form
+- [ ] **Public GitHub repository** (https://github.com/jease0502/SkillCoach-AIBC) link in form
 - [ ] **PDF deck** covering vision, problem, community benefit, feasibility, scalability (outline: [docs/HACKATHON.md](docs/HACKATHON.md#4-pdf-deck-outline-12-slides))
 - [ ] All materials in **English** (UI, README, docs, video voiceover/captions, deck)
 
@@ -57,7 +57,7 @@ Google Cloud AI Builder Cup 2026 (Hack2skill, JAPAC). **Deadline: 2026-10-18** (
 ### Deck
 - [ ] Exported as PDF; opens correctly; file size reasonable (< 20 MB)
 - [ ] Every statistic has a source, or is removed
-- [ ] Contains live URL (in [docs/DECK.md](docs/DECK.md)), video URL, GitHub URL, team names
+- [ ] Contains live URL and GitHub URL (in [docs/DECK.md](docs/DECK.md)), video URL, team names
 
 ### Form
 - [ ] All links tested from the submitted form itself after submission
