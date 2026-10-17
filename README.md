@@ -65,7 +65,8 @@ SkillCoach lets an employee practice a realistic conversation, by text or voice,
 | Native voice via Gemini Live API (low-latency, interruptible) | Planned |
 | On-device camera processing in live calls (MediaPipe Tasks Vision, in the browser): background blur or virtual backgrounds (office, branch, study), and real-time expression and emotion detection from 52 face blendshapes (8 emotions, eye contact from gaze and head pose, blink rate); the per-turn summary is sent with the Gemini delivery check, the video is not uploaded | Shipped |
 | Live call mode: the trainee's camera next to the 3D customer, hands-free voice turns (speak, the reply is spoken back, the mic reopens), and per-turn delivery feedback where Gemini 3.5 Flash-Lite reviews one camera frame for eye contact, expression and posture (frames are not stored; Chrome or Edge for voice) | Shipped |
-| 3D customer avatar on the practice screen (three.js + three-vrm, VRM 1.0): idle breathing, blinking, eye contact, lip sync while the reply streams or is spoken, facial mood driven by the trust and patience meters; initials fallback without WebGL | Shipped |
+| Photorealistic video customers for the seed personas: portraits generated with Gemini image generation (`gemini-3-pro-image`, fictional people) and animated with Veo 3.1 into three looping clips each (listening, talking, unhappy; first and last frame are the portrait, so loops are seamless), cross-faded by the conversation state ([tools/avatars/gen_portraits.py](tools/avatars/gen_portraits.py), [tools/avatars/gen_clips.py](tools/avatars/gen_clips.py)) | Shipped |
+| 3D customer avatar fallback for newly generated personas (three.js + three-vrm, VRM 1.0): idle breathing, blinking, eye contact, lip sync while the reply streams or is spoken, facial mood driven by the trust and patience meters; initials fallback without WebGL | Shipped |
 | On-device facial emotion cues (MediaPipe, browser only, no video leaves the device) | Planned |
 
 "Planned" items are not part of the judged build unless shown in the demo video.
@@ -197,6 +198,7 @@ PROJECT_ID=<project-id> ./infra/deploy-firebase.sh                            # 
 
 | Component | Used for | Licence |
 | --- | --- | --- |
+| Customer portraits and video clips (`frontend/public/avatars/video/`) | Generated for this project with Gemini image generation and Veo 3.1 on Vertex AI; fictional people | Project asset |
 | [Microsoft Rocketbox](https://github.com/microsoft/Microsoft-Rocketbox) | 7 customer avatar characters, exported to VRM and slimmed to 3-5 MB each by [tools/avatars/slim_vrm.py](tools/avatars/slim_vrm.py); files in `frontend/public/avatars/` | MIT |
 | [three.js](https://github.com/mrdoob/three.js) | WebGL rendering of the customer avatar | MIT |
 | [MediaPipe Tasks Vision](https://github.com/google-ai-edge/mediapipe) (`@mediapipe/tasks-vision`, Face Landmarker and Selfie Segmenter models, self-hosted in `frontend/public/mediapipe/`) | On-device background effects and expression cues in live calls | Apache-2.0 |

@@ -178,9 +178,23 @@ async function run() {
   const headed = process.argv.includes('--headed');
   await prewarm();
   // Software WebGL so the 3D customer avatar renders in headless Chromium.
-  const browser = await chromium.launch({ headless: !headed, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-  const context = await browser.newContext({ viewport: { width: WIDTH, height: HEIGHT }, deviceScaleFactor: 1 });
+  const args = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+    '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'];
+  // A sample trainee camera feed for the live-call beat (see README: FAKE_CAMERA).
+  if (process.env.FAKE_CAMERA) args.push(`--use-file-for-fake-video-capture=${process.env.FAKE_CAMERA}`);
+  const browser = await chromium.launch({ headless: !headed, args });
+  const context = await browser.newContext({ viewport: { width: WIDTH, height: HEIGHT }, deviceScaleFactor: 1, permissions: ['camera', 'microphone'] });
   await context.addInitScript(presentationScript, ZOOM);
+  // Headless Chromium has no speech service: replace recognition with a stub that never hears anything.
+  await context.addInitScript(() => {
+    class SilentRecognition {
+      start() {}
+      stop() { this.onend?.(); }
+      abort() { this.onend?.(); }
+    }
+    window.webkitSpeechRecognition = SilentRecognition;
+    window.SpeechRecognition = SilentRecognition;
+  });
   const page = await context.newPage();
   page.setDefaultTimeout(30_000);
 
@@ -242,9 +256,8 @@ async function run() {
     await page.getByRole('complementary', { name: 'Save and practice' }).waitFor();
     await sleep(0.4);
     await rec.cue('c06b_scenario');
-    await scrollBy(page, 620, 2.4);
-    await scrollBy(page, 620, 2.4);
     await scrollBy(page, 620, 2.2);
+    await scrollBy(page, 620, 2.0);
     await rec.quiet(-0.6);
 
     // ---------- Practice: scenario B ----------
@@ -296,6 +309,17 @@ async function run() {
       await sleep(1.8);
       await page.keyboard.press('Escape');
     }
+    // ---------- Live call: camera, virtual background, on-device expression cues ----------
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    await sleep(0.5);
+    await moveTo(page, page.getByRole('switch', { name: /Live call/ }));
+    await page.getByRole('img', { name: 'Your camera' }).waitFor({ timeout: 30_000 });
+    await rec.cue('c11b_live');
+    await moveTo(page, page.getByRole('radio', { name: 'Branch' }));
+    await page.waitForFunction(() => document.body.innerText.includes('Expression now'), null, { timeout: 60_000 }).catch(() => {});
+    await moveTo(page, page.getByRole('heading', { name: 'Camera and expression' }), { click: false, settle: 1.5 });
+    await rec.quiet(-0.4);
+
     // The pipeline narration plays over a live turn, so the trace fills in on screen.
     await rec.cue('c12_pipeline');
     await moveTo(page, input);
@@ -307,7 +331,13 @@ async function run() {
     await sleep(0.9);
     await moveTo(page, pipeline, { click: false, settle: 0 });
     await waitTurnDone(page);
+    const deliveryCard = page.getByRole('heading', { name: 'Your delivery on camera' });
+    await page.getByText(/Expression:/).waitFor({ timeout: 20_000 }).catch(() => {});
+    await deliveryCard.evaluate((h) => (h.closest('div.rounded-xl') ?? h).scrollIntoView({ block: 'center', behavior: 'smooth' }));
+    await sleep(1.2);
+    await moveTo(page, deliveryCard, { click: false, settle: 1.2 });
     await rec.quiet(-0.4);
+    await page.getByRole('switch', { name: /End live call/ }).click();
 
     // ---------- Report ----------
     await rec.cue('c13_end');
@@ -324,14 +354,6 @@ async function run() {
     await rec.cue('c15_evidence');
     await moveTo(page, page.getByRole('button', { name: /Turn \d+ →/ }).first());
     await sleep(3);
-    await rec.quiet(-0.4);
-    await rec.cue('c15b_violations');
-    const violations = page.getByRole('heading', { name: /Compliance violations/ });
-    await violations.evaluate((h) => h.scrollIntoView({ block: 'start', behavior: 'smooth' }));
-    await sleep(1.2);
-    await moveTo(page, violations, { click: false });
-    await sleep(2.5);
-    await scrollBy(page, 420, 2);
     await rec.quiet(-0.4);
 
     // ---------- Dashboard ----------

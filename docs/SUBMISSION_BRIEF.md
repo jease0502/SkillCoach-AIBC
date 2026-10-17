@@ -11,6 +11,7 @@ An admin uploads manuals and policies. Gemini drafts customer personas and pract
 **How we use Google Cloud**
 
 - **Gemini (Vertex AI, `google-genai` SDK):** seven agent roles per turn and session. Gemini 4 Argon voices the customer, builds personas and scenarios, and writes the report. Gemini 3.5 Flash-Lite runs the fast checks (compliance judge, grounding, trust state, coach). In live call mode, Gemini also looks at one webcam frame per turn and coaches eye contact, expression and posture (frames are not stored). We use structured JSON output, streaming, image input and `gemini-embedding-001` for retrieval. The server verifies every quote the model returns.
+- **Veo and Gemini image generation:** the practice customers are fictional people whose portraits were generated with `gemini-3-pro-image` and animated with Veo 3.1 into looping listening, talking and unhappy clips, so the trainee talks to a lifelike person on a video call.
 - **Cloud Run:** two stateless services, the Next.js web app and the FastAPI API. Replies stream over Server-Sent Events.
 - **Firestore:** all application state: documents, embedded chunks, personas, scenarios, sessions and reports.
 - **Firebase:** Firebase Hosting serves the public URL and rewrites every request to the Cloud Run web service.

@@ -50,6 +50,13 @@ export function avatarBackdrop(p: Persona): string {
   return '/backgrounds/study.jpg';
 }
 
+/** Seed customers with a photorealistic Veo clip set in public/avatars/video/ (tools/avatars/gen_clips.py). */
+const VIDEO_AVATARS = new Set(['persona-mr-tan', 'persona-dana-kim', 'persona-alex-morgan']);
+
+export function videoAvatarBase(p: Persona): string | null {
+  return VIDEO_AVATARS.has(p.id) ? `/avatars/video/${p.id}` : null;
+}
+
 export type AvatarMood = 'neutral' | 'happy' | 'relaxed' | 'angry' | 'sad' | 'surprised';
 
 /** Facial mood from the customer-state meters and the last change. */

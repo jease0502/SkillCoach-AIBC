@@ -30,6 +30,15 @@ node compose.mjs            # 4. Cut, align voice to the recording, captions, en
 | The app, or a step in the storyboard | `node record.mjs && node compose.mjs` |
 | Voiceover text in `cues.json` | `node synth.mjs --only <cue ids>`, then `node record.mjs && node compose.mjs` (the recording is paced on cue lengths) |
 
+The live-call beat uses a sample trainee camera feed: a fictional person (`sample-camera.jpg`, generated for testing, not a real trainee). Make the fake camera file and pass it to the recorder:
+
+```bash
+ffmpeg -loop 1 -i sample-camera.jpg -t 4 -r 15 -vf "scale=640:480,format=yuv420p" ../../media/build/sample-camera.y4m
+FAKE_CAMERA=../../media/build/sample-camera.y4m node record.mjs
+```
+
+Headless Chromium has no speech service, so the recorder replaces speech recognition with a silent stub and types the trainee's lines.
+
 Before recording:
 
 - Pre-warm both Cloud Run services (open the site once) so the first turn has no cold start.

@@ -29,11 +29,11 @@
     },
     {
       "id": "c06b_scenario",
-      "text": "Scenarios are built the same way. The goal, the compliance rules and the scoring rubric each point to a source, so a trainer can check every rule before it is used."
+      "text": "Scenarios work the same way: every rule and rubric item points to a source."
     },
     {
       "id": "c07_open",
-      "text": "Now a new insurance advisor meets Mr. Tan, a cautious retiree, as a 3D customer who reacts to every answer. His first question is a trap."
+      "text": "Now a new insurance advisor meets Mr. Tan, a cautious retiree, on a video call. He is a lifelike customer made with Gemini and Veo. His first question is a trap."
     },
     {
       "id": "c08_guard",
@@ -52,6 +52,10 @@
       "text": "An honest answer works better. The customer only states facts from the company's documents, with sources on every reply."
     },
     {
+      "id": "c11b_live",
+      "text": "Turn on a live call. The trainee's camera joins with a virtual background, and on-device face tracking reads expression and eye contact. Gemini then coaches the delivery."
+    },
+    {
       "id": "c12_pipeline",
       "text": "Each turn runs a pipeline of Gemini agents: compliance judge, customer, grounding check, trust model, and coach."
     },
@@ -68,17 +72,13 @@
       "text": "Every score quotes the trainee's own words, verified against the transcript. No evidence, no high score."
     },
     {
-      "id": "c15b_violations",
-      "text": "Each violation names the rule and jumps to the exact turn. Strengths and next steps turn the grade into a coaching plan."
-    },
-    {
       "id": "c16_dashboard",
       "text": "Managers see aggregates, never transcripts: skill gaps, broken rules, and who is ready to go live. Sample team data is labeled."
     },
     {
       "id": "c17_arch",
       "card": "arch",
-      "text": "Under the hood, it's all Google Cloud. Firebase Hosting serves the app, and the web and API run on Cloud Run. Firestore stores documents, personas, sessions and reports. Seven Gemini agent roles run on Vertex AI: Gemini 4 Argon for the customer, builder and report, Flash-Lite for the fast checks."
+      "text": "Under the hood, it's all Google Cloud. Firebase Hosting serves the app, and the web and API run on Cloud Run. Firestore stores documents, personas, sessions and reports. Gemini 4 Argon voices the customer, builds personas and writes the report; Flash-Lite runs the fast checks and the camera coach; Veo animates the customers."
     },
     {
       "id": "c17b_future",

@@ -36,7 +36,8 @@ import { DemoGuide } from '@/components/demo-guide';
 import { CustomerAvatar } from '@/components/customer-avatar';
 import { CameraPanel, DeliveryCard, SelfView, useSpeakingFlag, type SelfViewHandle } from '@/components/live-call';
 import { CueAccumulator, EMOTION_LABEL, type BackgroundMode, type CueSummary, type FaceCues } from '@/lib/face-vision';
-import { avatarBackdrop, avatarModelUrl, moodFromMeters } from '@/lib/avatar';
+import { avatarBackdrop, avatarModelUrl, moodFromMeters, videoAvatarBase } from '@/lib/avatar';
+import { VideoAvatar } from '@/components/video-avatar';
 import { GenerationProgress, REPORT_NOTE, REPORT_STAGES } from '@/components/generation-progress';
 
 type StepKey = 'compliance' | 'customer' | 'grounding' | 'state' | 'coach';
@@ -720,14 +721,24 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
         {/* Side panel */}
         <aside className="flex flex-col gap-4" aria-label="Session insights">
           <Card className="relative overflow-hidden p-0">
-            <CustomerAvatar
-              modelUrl={avatarModelUrl(persona)}
-              backdrop={avatarBackdrop(persona)}
-              name={persona.name}
-              streaming={streamText !== null && !voiceOut}
-              mood={moodFromMeters(meters.trust, meters.patience, meters.trust_delta)}
-              className={cn('rounded-none', live ? 'h-80' : 'h-64')}
-            />
+            {videoAvatarBase(persona) ? (
+              <VideoAvatar
+                base={videoAvatarBase(persona)!}
+                name={persona.name}
+                streaming={streamText !== null && !voiceOut}
+                mood={moodFromMeters(meters.trust, meters.patience, meters.trust_delta)}
+                className={live ? 'h-80' : 'h-64'}
+              />
+            ) : (
+              <CustomerAvatar
+                modelUrl={avatarModelUrl(persona)}
+                backdrop={avatarBackdrop(persona)}
+                name={persona.name}
+                streaming={streamText !== null && !voiceOut}
+                mood={moodFromMeters(meters.trust, meters.patience, meters.trust_delta)}
+                className={cn('rounded-none', live ? 'h-80' : 'h-64')}
+              />
+            )}
             {live && (
               <>
                 <SelfView

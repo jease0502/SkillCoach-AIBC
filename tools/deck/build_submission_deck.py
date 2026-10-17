@@ -264,7 +264,7 @@ def brief_slide(s):
         ("Problem", "New hires in insurance, banking, sales and support learn on real customers. "
                     "Practice depends on senior colleagues, and one non-compliant sentence is a conduct failure."),
         ("Idea", "Upload manuals and policies; Gemini drafts realistic AI customers that cite the source passages. "
-                 "A trainer approves them, and trainees practice any time with a 3D customer and a coach on every turn."),
+                 "A trainer approves them, and trainees practice any time with a lifelike video customer and a coach on every turn."),
         ("Trust", "A Compliance Guard holds a risky message before it is sent. Every score quotes the trainee's "
                   "own words, and one serious violation fails the session."),
         ("Built on", "Gemini on Vertex AI, Cloud Run, Firestore and Firebase Hosting. Theme: Future of Work & "
@@ -276,11 +276,11 @@ def brief_slide(s):
         text(s, X0 + 1.02, y, 4.1, 0.8, [(body, {"size": 10})])
         y += 0.8
     box(s, 5.75, Y0, 3.9, 3.95, fill=BLUE_BG, radius=0.12)
-    text(s, 5.9, Y0 + 0.1, 3.6, 0.3, [("Live app: a 3D customer, and the Guard holds a risky message",
+    text(s, 5.9, Y0 + 0.1, 3.6, 0.3, [("Live app: a video-call customer, and the Guard holds a risky message",
                                         {"size": 9.5, "bold": True, "color": BLUE})])
     fit_image(s, live("practice_guard"), 5.9, Y0 + 0.45, 3.6, 2.35)
     text(s, 5.9, Y0 + 2.95, 3.6, 0.9, [(
-        "Mr. Tan, a cautious retiree, is rendered as a 3D customer. The trainee types a guaranteed-return "
+        "Mr. Tan is a fictional retiree made with Gemini image generation and Veo. The trainee types a guaranteed-return "
         "promise; the Guard quotes the phrase, names rule CC-01 and offers Edit message or Send anyway.",
         {"size": 9.5, "color": INK})])
 
@@ -323,7 +323,7 @@ def features_slide(s):
     feats = [
         ("Persona builder", "Upload manuals; Gemini drafts customer personas and scenarios with citations to source passages."),
         ("Human approval", "Personas start as drafts. Only approved personas can back a practice scenario."),
-        ("Live AI customer", "Streamed replies, hidden needs revealed only when trust is earned, facts limited to the knowledge base."),
+        ("Lifelike AI customer", "A Veo-animated person on a video call; streamed replies, hidden needs revealed only when trust is earned."),
         ("Compliance Guard", "Checks each message before it is sent, quotes the phrase and names the rule. Edit or send anyway."),
         ("Coach on every turn", "A one-sentence hint grounded in the company playbook, with knowledge-base citations."),
         ("Trust and patience meters", "The customer's state updates every turn, so trainees see the effect of their words."),
@@ -365,7 +365,7 @@ def process_slide(s):
         if i < 2:
             arrow(s, x + w + 0.07, Y0 + 1.28, x + w + gap - 0.07, Y0 + 1.28, color=BLUE)
     caption(s, X0, Y0 + 3.8, 9.3,
-            "Screens from the deployed app: a persona grounded in cited sources, the 3D customer with the "
+            "Screens from the deployed app: a persona grounded in cited sources, the video customer with the "
             "Compliance Guard card, and the evidence-verified report.")
 
 
@@ -482,6 +482,7 @@ def technologies_slide(s):
         ("Cloud Run", "two stateless services: Next.js web and FastAPI API, autoscaling, min 1 instance."),
         ("Firestore", "all state: documents, vector chunks, personas, scenarios, sessions, reports."),
         ("Firebase", "Hosting serves the public URL and rewrites traffic to Cloud Run."),
+        ("Veo + Gemini image", "fictional customer portraits animated into listening, talking and unhappy clips."),
         ("Also", "Python 3.12, Next.js 15, three.js VRM avatar, MediaPipe on-device vision, Web Speech API."),
     ]:
         paras.append([(head + ": ", {"size": 9.5, "bold": True, "color": BLUE}), (body, {"size": 9.5})])
@@ -538,8 +539,8 @@ def cost_slide(s):
 
 SNAPSHOT_PAGES = [
     ("Snapshots of the prototype: practice", [
-        ("practice_start", "Mr. Tan as a 3D customer: he blinks, breathes, keeps eye contact and lip-syncs. "
-                           "His mood follows the trust and patience meters."),
+        ("practice_start", "A live call: Mr. Tan, animated with Veo, listens, talks and frowns as trust changes; the trainee's "
+                           "camera joins with a virtual background and on-device expression tracking."),
         ("practice_guard", "\"This plan guarantees you 8% a year\" is held before it is sent: the Guard quotes the "
                            "words, names rule CC-01, and offers Edit message or Send anyway."),
     ]),
@@ -612,7 +613,7 @@ def performance_slide(s):
 def future_slide(s):
     set_title(s, "Additional details / future development")
     cols = [
-        ("Now (shipped)", True, ["Practice with a 3D AI customer", "Live call: camera, hands-free voice, delivery feedback",
+        ("Now (shipped)", True, ["Lifelike video customers (Gemini image + Veo)", "Live call: camera, hands-free voice, delivery feedback",
                                  "Document-generated personas with citations and approval",
                                  "Multi-agent turns: guard, customer, grounding, state, coach",
                                  "Evidence-verified reports, manager readiness view"]),
