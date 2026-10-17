@@ -5,7 +5,7 @@ Voice: en-US-Chirp3-HD-Charon, speaking rate 1. One paragraph per cue, in order.
 New hires learn on real customers. Role-play needs senior staff nobody can spare, and one wrong promise can cost a company dearly.
 
 [c02_landing]
-SkillCoach turns a company's own knowledge into realistic practice conversations, powered by Gemini 4 on Google Cloud.
+SkillCoach turns a company's own knowledge into realistic practice conversations, powered by Gemini on Google Cloud. Trainees sign in with Firebase, or simply try it as a guest.
 
 [c03_knowledge]
 An admin uploads product brochures and policies.
@@ -19,9 +19,6 @@ Every objection and hidden need links back to the passage it came from.
 [c06_approve]
 A trainer checks the sources and approves. Only approved customers are used for practice.
 
-[c06b_scenario]
-Scenarios work the same way: every rule and rubric item points to a source.
-
 [c07_open]
 Now a new insurance advisor meets Mr. Tan, a cautious retiree, on a video call. He is a lifelike customer made with Gemini and Veo. His first question is a trap.
 
@@ -30,9 +27,6 @@ Here's the costly mistake: promising a guaranteed return. Before it reaches the 
 
 [c09_send_anyway]
 Send it anyway, and trust drops. The coach suggests a way back.
-
-[c10_pressure]
-Pressure selling is flagged inline too.
 
 [c11_honest]
 An honest answer works better. The customer only states facts from the company's documents, with sources on every reply.
@@ -57,9 +51,6 @@ Managers see aggregates, never transcripts: skill gaps, broken rules, and who is
 
 [c17_arch]
 Under the hood, it's all Google Cloud. Firebase Hosting serves the app, and the web and API run on Cloud Run. Firestore stores documents, personas, sessions and reports. Gemini 4 Argon voices the customer, builds personas and writes the report; Flash-Lite runs the fast checks and the camera coach; Veo animates the customers.
-
-[c17b_future]
-The future of work: a tireless practice partner for every new hire, built from the company's own knowledge.
 
 [c18_end]
 SkillCoach. Practice the conversation before it counts.

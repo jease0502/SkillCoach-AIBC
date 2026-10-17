@@ -39,12 +39,19 @@ export function VideoAvatar({ base, name, streaming, mood, className }: Props) {
 
   const active: Clip = speaking || streaming ? 'talk' : mood === 'angry' || mood === 'sad' ? 'upset' : 'listen';
 
-  // Restart the talking clip from its first frame when the customer starts to speak.
+  // Only the visible clip plays (three decoders at once stutter on laptops). Every clip starts
+  // on the portrait frame, so restarting the newly shown one from 0 is seamless.
   useEffect(() => {
-    const v = refs.current[active];
-    if (!v) return;
-    if (active === 'talk') v.currentTime = 0;
-    void v.play().catch(() => {});
+    for (const c of CLIPS) {
+      const v = refs.current[c];
+      if (!v) continue;
+      if (c === active) {
+        v.currentTime = 0;
+        void v.play().catch(() => {});
+      } else {
+        v.pause();
+      }
+    }
   }, [active]);
 
   return (
@@ -60,11 +67,11 @@ export function VideoAvatar({ base, name, streaming, mood, className }: Props) {
           muted
           loop
           playsInline
-          autoPlay
+          autoPlay={c === 'listen'}
           preload="auto"
           aria-hidden
           className={cn(
-            'absolute inset-0 h-full w-full object-cover transition-opacity duration-300',
+            'absolute inset-0 h-full w-full object-cover transition-opacity duration-150',
             c === active ? 'opacity-100' : 'opacity-0',
           )}
           style={{ objectPosition: '50% 30%' }}

@@ -262,6 +262,11 @@ async function run() {
     await moveTo(page, page.getByRole('link', { name: 'Try the 3-minute demo' }), { click: false });
     await sleep(2.5);
     await scrollBy(page, 560, 2);
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    await sleep(0.6);
+    await moveTo(page, page.getByRole('link', { name: 'Sign in' }));
+    await moveTo(page, page.getByRole('button', { name: 'Continue as guest' }));
+    await page.getByRole('link', { name: /Guest/ }).waitFor({ timeout: 20_000 });
     await rec.quiet(-0.6);
 
     // ---------- Knowledge ----------

@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { API_URL, MOCK, api, errorMessage } from '@/lib/api';
 import type { CoachHint, ComplianceFlag, DeliveryFeedback, Persona, Scenario, Session, StateEventData, Turn } from '@/lib/types';
-import { onSpeechActivity, speak, speechSynthesisSupported, stopSpeaking, useSpeechRecognition } from '@/lib/speech';
+import { onSpeechActivity, speak, speechSynthesisSupported, stopSpeaking, unlockAudio, useSpeechRecognition } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { Avatar, Badge, Button, Card, CitationList, DifficultyDots, ErrorState, LinkButton, Meter, Skeleton } from '@/components/ui';
 import { FlagList, HighlightedText, TurnBubble } from '@/components/transcript';
@@ -409,12 +409,14 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
+    unlockAudio();
     if (live) liveSubmit(draft);
     else void submit(draft);
   };
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
+      unlockAudio();
       if (live) liveSubmit(draft);
       else void submit(draft);
     }
@@ -434,6 +436,7 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
   }, [canListen, stt.listening, stt.supported, stt.start]);
 
   const toggleLive = () => {
+    unlockAudio();
     if (live) {
       stt.stop();
       setLive(false);
@@ -573,7 +576,63 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
         </div>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_320px]">
+        {/* Customer on a video-call stage */}
+        <Card className="relative overflow-hidden p-0 lg:sticky lg:top-20">
+          {videoAvatarBase(persona) ? (
+            <VideoAvatar
+              base={videoAvatarBase(persona)!}
+              name={persona.name}
+              streaming={streamText !== null && !voiceOut}
+              mood={moodFromMeters(meters.trust, meters.patience, meters.trust_delta)}
+              className="h-[min(calc(100vh-12rem),720px)] min-h-[360px]"
+            />
+          ) : (
+            <CustomerAvatar
+              modelUrl={avatarModelUrl(persona)}
+              backdrop={avatarBackdrop(persona)}
+              name={persona.name}
+              streaming={streamText !== null && !voiceOut}
+              mood={moodFromMeters(meters.trust, meters.patience, meters.trust_delta)}
+              className="h-[min(calc(100vh-12rem),720px)] min-h-[360px] rounded-none"
+            />
+          )}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/45 to-transparent" aria-hidden />
+          <div className="absolute bottom-4 left-4 text-white drop-shadow">
+            <div className="text-base font-semibold">{persona.name}</div>
+            <div className="text-xs text-white/80">{persona.title}</div>
+          </div>
+          {live && (
+            <>
+              <SelfView
+                ref={selfRef}
+                background={background}
+                onCues={onCues}
+                className="absolute bottom-4 right-4 h-32 w-44"
+                onError={(m) => toast('error', m)}
+              />
+              <span
+                aria-live="polite"
+                className={cn(
+                  'absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-white shadow',
+                  stt.listening ? 'bg-rose-600' : customerSpeaking || busy ? 'bg-slate-800/80' : 'bg-slate-600/80',
+                )}
+              >
+                {stt.listening ? <Mic className="h-3.5 w-3.5" aria-hidden /> : null}
+                {stt.listening
+                  ? 'Listening… speak now'
+                  : customerSpeaking
+                    ? `${persona.name} is speaking`
+                    : busy || checking
+                      ? `${persona.name} is thinking`
+                      : guard
+                        ? 'Message held by the Compliance Guard'
+                        : 'Your turn'}
+              </span>
+            </>
+          )}
+        </Card>
+
         {/* Conversation */}
         <Card className="flex h-[calc(100vh-12rem)] min-h-[480px] flex-col overflow-hidden">
           <div ref={scrollRef} onScroll={onScroll} className="scrollbar-thin flex-1 overflow-y-auto px-4 py-6 sm:px-6">
@@ -725,56 +784,7 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
         </Card>
 
         {/* Side panel */}
-        <aside className="flex flex-col gap-4" aria-label="Session insights">
-          <Card className="relative overflow-hidden p-0">
-            {videoAvatarBase(persona) ? (
-              <VideoAvatar
-                base={videoAvatarBase(persona)!}
-                name={persona.name}
-                streaming={streamText !== null && !voiceOut}
-                mood={moodFromMeters(meters.trust, meters.patience, meters.trust_delta)}
-                className={live ? 'h-80' : 'h-64'}
-              />
-            ) : (
-              <CustomerAvatar
-                modelUrl={avatarModelUrl(persona)}
-                backdrop={avatarBackdrop(persona)}
-                name={persona.name}
-                streaming={streamText !== null && !voiceOut}
-                mood={moodFromMeters(meters.trust, meters.patience, meters.trust_delta)}
-                className={cn('rounded-none', live ? 'h-80' : 'h-64')}
-              />
-            )}
-            {live && (
-              <>
-                <SelfView
-                  ref={selfRef}
-                  background={background}
-                  onCues={onCues}
-                  className="absolute bottom-3 right-3 h-24 w-32"
-                  onError={(m) => toast('error', m)}
-                />
-                <span
-                  aria-live="polite"
-                  className={cn(
-                    'absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-white shadow',
-                    stt.listening ? 'bg-rose-600' : customerSpeaking || busy ? 'bg-slate-800/80' : 'bg-slate-600/80',
-                  )}
-                >
-                  {stt.listening ? <Mic className="h-3.5 w-3.5" aria-hidden /> : null}
-                  {stt.listening
-                    ? 'Listening… speak now'
-                    : customerSpeaking
-                      ? `${persona.name} is speaking`
-                      : busy || checking
-                        ? `${persona.name} is thinking`
-                        : guard
-                          ? 'Message held by the Compliance Guard'
-                          : 'Your turn'}
-                </span>
-              </>
-            )}
-          </Card>
+        <aside className="flex flex-col gap-4 lg:col-span-2 xl:col-span-1" aria-label="Session insights">
           {live && <CameraPanel background={background} onBackground={setBackground} cues={cues} />}
           {live && (
             <DeliveryCard

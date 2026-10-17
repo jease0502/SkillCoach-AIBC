@@ -80,7 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         Skip to main content
       </a>
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-glass bg-white/70 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6">
           <Link href="/" aria-label="SkillCoach home" className="rounded-lg">
             <Logo />
@@ -150,7 +150,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
         {children}
       </main>
-      <footer className="border-t border-slate-200 bg-white">
+      <footer className="border-t border-glass bg-white/50 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-6 text-xs text-slate-500 sm:flex-row sm:justify-between sm:px-6">
           <span>SkillCoach &middot; Practice the conversation before it counts.</span>
           <span>Built with Gemini on Google Cloud &middot; AI Builder Cup 2026</span>

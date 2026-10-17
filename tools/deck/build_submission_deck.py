@@ -481,7 +481,7 @@ def technologies_slide(s):
         ("Gemini", "seven agent roles via Vertex AI (google-genai SDK), plus a vision check in live calls; structured JSON, streaming, embeddings."),
         ("Cloud Run", "two stateless services: Next.js web and FastAPI API, autoscaling, min 1 instance."),
         ("Firestore", "all state: documents, vector chunks, personas, scenarios, sessions, reports."),
-        ("Firebase", "Hosting serves the public URL and rewrites traffic to Cloud Run."),
+        ("Firebase", "Hosting serves the public URL; Authentication handles sign-up, sign-in and guests."),
         ("Veo + Gemini image", "fictional customer portraits animated into listening, talking and unhappy clips."),
         ("Also", "Python 3.12, Next.js 15, three.js VRM avatar, MediaPipe on-device vision, Web Speech API."),
     ]:

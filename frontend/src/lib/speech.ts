@@ -99,8 +99,37 @@ export function onSpeechActivity(fn: (a: SpeechActivity) => void): () => void {
   };
 }
 
-let currentAudio: HTMLAudioElement | null = null;
+// One shared <audio> element. Safari and iOS only let a page play audio that a click or key
+// press started, so the first gesture "unlocks" this element and every reply reuses it.
+let sharedAudio: HTMLAudioElement | null = null;
+let currentUrl: string | null = null;
 let speakToken = 0;
+const SILENCE =
+  'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+
+function audioElement(): HTMLAudioElement {
+  if (!sharedAudio) {
+    sharedAudio = new Audio();
+    sharedAudio.preload = 'auto';
+    // 'playing' fires when sound actually starts (after buffering), so the talking video lines up.
+    sharedAudio.addEventListener('playing', () => emitSpeech('start'));
+    const done = () => emitSpeech('end');
+    sharedAudio.addEventListener('ended', done);
+    sharedAudio.addEventListener('pause', done);
+    sharedAudio.addEventListener('error', done);
+  }
+  return sharedAudio;
+}
+
+/** Call from a click or key handler so later replies may play on Safari / iOS. */
+export function unlockAudio() {
+  if (typeof window === 'undefined') return;
+  const a = audioElement();
+  if (a.dataset.unlocked) return;
+  a.dataset.unlocked = '1';
+  a.src = SILENCE;
+  a.play().then(() => a.pause()).catch(() => {});
+}
 
 /**
  * Speak the customer's reply. With a Cloud voice (Chirp 3 HD, via the API's /api/tts) when
@@ -118,18 +147,11 @@ export function speak(text: string, lang = 'en-US', cloudVoice?: string, apiUrl?
       .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
       .then((blob) => {
         if (token !== speakToken) return;
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        currentAudio = audio;
-        audio.onplay = () => emitSpeech('start');
-        const done = () => {
-          URL.revokeObjectURL(url);
-          if (currentAudio === audio) currentAudio = null;
-          emitSpeech('end');
-        };
-        audio.onended = done;
-        audio.onerror = done;
-        return audio.play();
+        const a = audioElement();
+        if (currentUrl) URL.revokeObjectURL(currentUrl);
+        currentUrl = URL.createObjectURL(blob);
+        a.src = currentUrl;
+        return a.play();
       })
       .catch(() => {
         if (token === speakToken) browserSpeak(text, lang);
@@ -159,10 +181,7 @@ function browserSpeak(text: string, lang: string) {
 
 export function stopSpeaking() {
   speakToken++;
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
+  if (sharedAudio && !sharedAudio.paused) sharedAudio.pause();
   if (speechSynthesisSupported()) window.speechSynthesis.cancel();
   emitSpeech('end');
 }

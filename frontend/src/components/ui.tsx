@@ -12,8 +12,8 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'subtle';
 type Size = 'sm' | 'md' | 'lg';
 
 const variantClass: Record<Variant, string> = {
-  primary: 'bg-brand-600 text-white hover:bg-brand-700 shadow-sm disabled:bg-brand-600/60',
-  secondary: 'bg-white text-slate-800 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 shadow-sm',
+  primary: 'bg-ink text-white hover:bg-ink-hover shadow-[0_1px_2px_rgba(30,30,35,0.12)] hover:shadow-[0_3px_9px_rgba(30,30,35,0.18)] disabled:bg-ink/60',
+  secondary: 'bg-white/90 text-slate-800 ring-1 ring-inset ring-slate-200 hover:bg-white shadow-card',
   ghost: 'text-slate-700 hover:bg-slate-100',
   subtle: 'bg-brand-50 text-brand-700 hover:bg-brand-100',
   danger: 'bg-white text-rose-700 ring-1 ring-inset ring-rose-300 hover:bg-rose-50',
@@ -80,7 +80,7 @@ export function LinkButton({
 // ---------- Layout primitives ----------
 
 export function Card({ className, ...rest }: ComponentProps<'div'>) {
-  return <div className={cn('rounded-xl border border-slate-200 bg-white shadow-card', className)} {...rest} />;
+  return <div className={cn('rounded-xl border border-glass bg-white/80 shadow-card backdrop-blur-xl', className)} {...rest} />;
 }
 
 export function SectionTitle({ children, action, id }: { children: ReactNode; action?: ReactNode; id?: string }) {

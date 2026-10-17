@@ -136,9 +136,11 @@ async function loadVision() {
         outputFacialTransformationMatrixes: true,
       }),
     );
-    const seg = await make((delegate) =>
+    // The selfie segmenter is tiny; the CPU delegate is fast and works in every browser
+    // (the GPU path fails on some Safari versions).
+    const seg = await make(() =>
       ImageSegmenter.createFromOptions(files, {
-        baseOptions: { modelAssetPath: SEG_MODEL, delegate },
+        baseOptions: { modelAssetPath: SEG_MODEL, delegate: 'CPU' },
         runningMode: 'VIDEO',
         outputCategoryMask: false,
         outputConfidenceMasks: true,
@@ -180,6 +182,10 @@ export function startFaceVision(
   const mctx = mask.getContext('2d');
   const person = document.createElement('canvas');
   const pctx = person.getContext('2d');
+  // Blur by downscaling and scaling back up: works where CanvasRenderingContext2D.filter
+  // does not (Safari).
+  const small = document.createElement('canvas');
+  const sctx = small.getContext('2d');
   let vision: { face: FaceLandmarker; seg: ImageSegmenter } | null = null;
 
   loadVision()
@@ -221,9 +227,8 @@ export function startFaceVision(
           res.close();
           // Person layer: video masked by the confidence mask (softened edges).
           pctx.globalCompositeOperation = 'copy';
-          pctx.filter = 'blur(2px)';
-          pctx.drawImage(mask, 0, 0, w, h);
-          pctx.filter = 'none';
+          pctx.imageSmoothingEnabled = true;
+          pctx.drawImage(mask, 0, 0, w, h); // the low-res mask is smoothed when scaled up
           pctx.globalCompositeOperation = 'source-in';
           pctx.drawImage(video, 0, 0, w, h);
           pctx.globalCompositeOperation = 'source-over';
@@ -234,10 +239,14 @@ export function startFaceVision(
             const bw = bg.naturalWidth * s;
             const bh = bg.naturalHeight * s;
             ctx.drawImage(bg, (w - bw) / 2, (h - bh) / 2, bw, bh);
-          } else {
-            ctx.filter = 'blur(14px)';
-            ctx.drawImage(video, 0, 0, w, h);
-            ctx.filter = 'none';
+          } else if (sctx) {
+            small.width = Math.max(1, Math.round(w / 14));
+            small.height = Math.max(1, Math.round(h / 14));
+            sctx.imageSmoothingEnabled = true;
+            sctx.drawImage(video, 0, 0, small.width, small.height);
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(small, 0, 0, w, h);
           }
           ctx.drawImage(person, 0, 0);
           composed = true;
