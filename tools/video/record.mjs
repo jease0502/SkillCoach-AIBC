@@ -214,7 +214,7 @@ async function scrollBy(page, dy, seconds = 1.2) {
  */
 async function waitTurnDone(page) {
   const stat = page.getByText('First token', { exact: true });
-  await stat.waitFor({ state: 'hidden', timeout: 15_000 });
+  await stat.waitFor({ state: 'hidden', timeout: 60_000 });
   await stat.waitFor({ timeout: 60_000 });
   await sleep(0.6);
 }
@@ -364,12 +364,16 @@ async function run() {
     await page.waitForFunction(() => document.body.innerText.includes('Expression now'), null, { timeout: 60_000 }).catch(() => {});
     await moveTo(page, page.getByRole('heading', { name: 'Camera and expression' }), { click: false, settle: 1.5 });
     await rec.quiet(-0.4);
+    // Background segmentation is heavy in headless software rendering; expression tracking stays on.
+    await page.getByRole('radio', { name: 'No effect' }).click();
 
     // The pipeline narration plays over a live turn, so the trace fills in on screen.
     await moveTo(page, input);
     await rec.say('trainee', LINES.discovery);
-    await input.pressSequentially(LINES.discovery, { delay: TYPE_DELAY - 8 });
-    await page.keyboard.press('Enter');
+    // Live mode runs MediaPipe in software rendering here, so type the line in one go.
+    await input.fill(LINES.discovery, { timeout: 90_000 });
+    // The send button enables once React has the new draft; Enter could fire before that.
+    await page.getByRole('button', { name: 'Send reply' }).click({ timeout: 90_000 });
     await rec.cue('c12_pipeline');
     const pipeline = page.getByRole('heading', { name: 'Gemini pipeline, last turn' });
     // Center the trace card so the burned-in captions do not cover it.

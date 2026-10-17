@@ -578,7 +578,7 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_320px]">
         {/* Customer on a video-call stage */}
-        <Card className="relative overflow-hidden p-0 lg:sticky lg:top-20">
+        <Card className="relative self-start overflow-hidden p-0 lg:sticky lg:top-20">
           {videoAvatarBase(persona) ? (
             <VideoAvatar
               base={videoAvatarBase(persona)!}
