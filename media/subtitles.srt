@@ -1,183 +1,159 @@
 1
-00:00:00,800 --> 00:00:02,787
-New hires learn on real customers.
+00:00:00,800 --> 00:00:05,880
+New hires learn on real customers, and one wrong promise can cost a company dearly.
 
 2
-00:00:02,787 --> 00:00:07,403
-Role-play needs senior staff nobody can spare, and one wrong promise can cost a
-
-3
-00:00:07,403 --> 00:00:08,280
-company dearly.
-
-4
-00:00:09,996 --> 00:00:13,742
+00:00:07,584 --> 00:00:11,401
 SkillCoach turns a company's own knowledge into realistic practice
 
-5
-00:00:13,742 --> 00:00:16,636
-conversations, powered by Gemini 4 on Google Cloud.
+3
+00:00:11,401 --> 00:00:14,234
+conversations, powered by Gemini on Google Cloud.
 
-6
-00:00:17,242 --> 00:00:20,642
+4
+00:00:14,234 --> 00:00:17,704
+Trainees sign in with Firebase, or simply try it as a guest.
+
+5
+00:00:18,321 --> 00:00:21,721
 An admin uploads product brochures and policies.
 
-7
-00:00:22,136 --> 00:00:27,576
+6
+00:00:23,652 --> 00:00:29,092
 Gemini 4 reads those documents and proposes realistic customer types.
 
-8
-00:00:30,443 --> 00:00:35,483
+7
+00:00:31,969 --> 00:00:37,009
 Every objection and hidden need links back to the passage it came from.
 
-9
-00:00:36,068 --> 00:00:38,626
+8
+00:00:37,638 --> 00:00:40,196
 A trainer checks the sources and approves.
 
-10
-00:00:38,626 --> 00:00:41,428
+9
+00:00:40,196 --> 00:00:42,998
 Only approved customers are used for practice.
 
-11
-00:00:44,235 --> 00:00:46,296
-Scenarios are built the same way.
-
-12
-00:00:46,296 --> 00:00:51,294
-The goal, the compliance rules and the scoring rubric each point to a source, so
-
-13
-00:00:51,294 --> 00:00:54,355
-a trainer can check every rule before it is used.
-
-14
-00:00:57,539 --> 00:01:00,214
+10
+00:00:47,347 --> 00:00:49,885
 Now a new insurance advisor meets Mr.
 
-15
-00:01:00,214 --> 00:01:05,202
-Tan, a cautious retiree, as a 3D customer who reacts to every answer.
+11
+00:00:49,885 --> 00:00:52,698
+Tan, a cautious retiree, on a video call.
 
-16
-00:01:05,202 --> 00:01:07,299
+12
+00:00:52,698 --> 00:00:56,197
+He is a lifelike customer made with Gemini and Veo.
+
+13
+00:00:56,197 --> 00:00:58,187
 His first question is a trap.
 
-17
-00:01:09,945 --> 00:01:11,690
+14
+00:01:09,573 --> 00:01:11,318
 Here's the costly mistake:
 
-18
-00:01:11,690 --> 00:01:13,702
+15
+00:01:11,318 --> 00:01:13,330
 promising a guaranteed return.
 
-19
-00:01:13,702 --> 00:01:19,070
+16
+00:01:13,330 --> 00:01:18,698
 Before it reaches the customer, the Compliance Guard stops it, quotes the words,
 
-20
-00:01:19,070 --> 00:01:20,345
+17
+00:01:18,698 --> 00:01:19,973
 and names the rule.
 
-21
-00:01:20,708 --> 00:01:22,896
+18
+00:01:20,325 --> 00:01:22,513
 Send it anyway, and trust drops.
 
-22
-00:01:22,896 --> 00:01:24,948
+19
+00:01:22,513 --> 00:01:24,565
 The coach suggests a way back.
 
-23
-00:01:35,976 --> 00:01:38,456
-Pressure selling is flagged inline too.
-
-24
-00:01:46,716 --> 00:01:48,340
+20
+00:01:31,696 --> 00:01:33,320
 An honest answer works better.
 
-25
-00:01:48,340 --> 00:01:53,156
+21
+00:01:33,320 --> 00:01:38,136
 The customer only states facts from the company's documents, with sources on every reply.
 
+22
+00:02:02,317 --> 00:02:03,586
+Turn on a live call.
+
+23
+00:02:03,586 --> 00:02:08,157
+The trainee's camera joins with a virtual background, and on-device face
+
+24
+00:02:08,157 --> 00:02:10,822
+tracking reads expression and eye contact.
+
+25
+00:02:10,822 --> 00:02:12,917
+Gemini then coaches the delivery.
+
 26
-00:02:04,542 --> 00:02:07,579
+00:02:33,215 --> 00:02:36,252
 Each turn runs a pipeline of Gemini agents:
 
 27
-00:02:07,579 --> 00:02:12,382
+00:02:36,252 --> 00:02:41,055
 compliance judge, customer, grounding check, trust model, and coach.
 
 28
-00:02:19,485 --> 00:02:21,565
+00:02:58,474 --> 00:03:00,554
 Now, the report.
 
 29
-00:02:25,596 --> 00:02:29,233
+00:03:04,760 --> 00:03:08,397
 One forbidden promise fails the session, however good the rest was.
 
 30
-00:02:29,233 --> 00:02:31,676
+00:03:08,397 --> 00:03:10,840
 The overall score cannot go above fifty-nine.
 
 31
-00:02:32,028 --> 00:02:37,842
+00:03:11,191 --> 00:03:17,005
 Every score quotes the trainee's own words, verified against the transcript.
 
 32
-00:02:37,842 --> 00:02:39,908
+00:03:17,005 --> 00:03:19,071
 No evidence, no high score.
 
 33
-00:02:40,269 --> 00:02:43,720
-Each violation names the rule and jumps to the exact turn.
-
-34
-00:02:43,720 --> 00:02:47,349
-Strengths and next steps turn the grade into a coaching plan.
-
-35
-00:02:49,485 --> 00:02:52,815
+00:03:22,164 --> 00:03:25,494
 Managers see aggregates, never transcripts:
 
-36
-00:02:52,815 --> 00:02:56,997
+34
+00:03:25,494 --> 00:03:29,676
 skill gaps, broken rules, and who is ready to go live.
 
-37
-00:02:56,997 --> 00:02:59,165
+35
+00:03:29,676 --> 00:03:31,844
 Sample team data is labeled.
 
+36
+00:03:33,914 --> 00:03:34,863
+Under the hood:
+
+37
+00:03:34,863 --> 00:03:39,608
+Firebase Hosting and Authentication, Cloud Run, Firestore, Gemini 4 for the
+
 38
-00:03:01,238 --> 00:03:03,842
-Under the hood, it's all Google Cloud.
+00:03:39,608 --> 00:03:43,594
+customer, coach and report, and Veo for the lifelike customers.
 
 39
-00:03:03,842 --> 00:03:08,640
-Firebase Hosting serves the app, and the web and API run on Cloud Run.
-
-40
-00:03:08,640 --> 00:03:12,683
-Firestore stores documents, personas, sessions and reports.
-
-41
-00:03:12,683 --> 00:03:15,561
-Seven Gemini agent roles run on Vertex AI:
-
-42
-00:03:15,561 --> 00:03:21,318
-Gemini 4 Argon for the customer, builder and report, Flash-Lite for the fast checks.
-
-43
-00:03:21,768 --> 00:03:22,937
-The future of work:
-
-44
-00:03:22,937 --> 00:03:28,288
-a tireless practice partner for every new hire, built from the company's own knowledge.
-
-45
-00:03:29,888 --> 00:03:30,662
+00:03:45,194 --> 00:03:45,968
 SkillCoach.
 
-46
-00:03:30,662 --> 00:03:33,688
+40
+00:03:45,968 --> 00:03:48,994
 Practice the conversation before it counts.

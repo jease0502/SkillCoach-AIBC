@@ -5,7 +5,7 @@
     {
       "id": "c01_title",
       "card": "title",
-      "text": "New hires learn on real customers. Role-play needs senior staff nobody can spare, and one wrong promise can cost a company dearly."
+      "text": "New hires learn on real customers, and one wrong promise can cost a company dearly."
     },
     {
       "id": "c02_landing",
@@ -70,7 +70,7 @@
     {
       "id": "c17_arch",
       "card": "arch",
-      "text": "Under the hood, it's all Google Cloud. Firebase Hosting serves the app, and the web and API run on Cloud Run. Firestore stores documents, personas, sessions and reports. Gemini 4 Argon voices the customer, builds personas and writes the report; Flash-Lite runs the fast checks and the camera coach; Veo animates the customers."
+      "text": "Under the hood: Firebase Hosting and Authentication, Cloud Run, Firestore, Gemini 4 for the customer, coach and report, and Veo for the lifelike customers."
     },
     {
       "id": "c18_end",

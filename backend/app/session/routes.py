@@ -174,6 +174,11 @@ async def dashboard() -> Dashboard:
         for f in r.compliance_violations:
             violations[f.rule_id] += 1
             messages.setdefault(f.rule_id, f.message)
+    # Show each rule's own wording, not the model's comment on one trainee's message.
+    for sc in scenarios.values():
+        for rule in sc.compliance_rules:
+            if rule.id in messages:
+                messages[rule.id] = rule.rule
 
     recent = sorted(sessions, key=lambda s: s.started_at, reverse=True)[:RECENT_SESSIONS]
     return Dashboard(

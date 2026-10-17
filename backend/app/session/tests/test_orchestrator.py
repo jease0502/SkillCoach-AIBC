@@ -569,7 +569,8 @@ def test_http_session_flow_and_dashboard(llm):
     assert d["top_violations"][0]["rule_id"] == "no-guarantee"
     assert next(r for r in d["recent_sessions"] if r["id"] == s["id"])["compliance_passed"] is False
     assert d["ready_count"] == 0  # failed compliance is never "ready"
-    assert "turns" not in json.dumps(d)  # aggregates only, no transcripts
+    assert '"turns":' not in json.dumps(d)  # aggregates only, no transcripts
+    assert d["top_violations"][0]["message"] == "Never guarantee savings or returns"  # the rule, not one flag
 
 
 def test_dashboard_ready_count(llm):

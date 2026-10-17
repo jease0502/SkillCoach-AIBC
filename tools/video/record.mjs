@@ -214,8 +214,9 @@ async function scrollBy(page, dy, seconds = 1.2) {
  */
 async function waitTurnDone(page) {
   const stat = page.getByText('First token', { exact: true });
-  await stat.waitFor({ state: 'hidden', timeout: 60_000 });
-  await stat.waitFor({ timeout: 60_000 });
+  // A fast turn can hide and re-show the stat before we look; missing the hidden state is fine.
+  await stat.waitFor({ state: 'hidden', timeout: 8_000 }).catch(() => {});
+  await stat.waitFor({ timeout: 90_000 });
   await sleep(0.6);
 }
 
