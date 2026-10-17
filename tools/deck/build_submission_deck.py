@@ -23,6 +23,22 @@ from pptx.util import Inches, Pt
 
 MEDIA = Path("media")
 SHOTS = MEDIA / "deck"
+LIVE_CACHE = MEDIA / "build" / "deck-live"
+
+
+def live(name: str) -> Path:
+    """A screenshot of the deployed app (tools/video/deck-shots.mjs), re-encoded as a
+    1920-px JPEG so the deck stays small."""
+    from PIL import Image as PILImage
+
+    src = SHOTS / f"live_{name}.png"
+    dst = LIVE_CACHE / f"{name}.jpg"
+    if not dst.exists() or dst.stat().st_mtime < src.stat().st_mtime:
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        im = PILImage.open(src).convert("RGB")
+        im.thumbnail((1920, 1920), PILImage.LANCZOS)
+        im.save(dst, "JPEG", quality=88, optimize=True)
+    return dst
 
 FONT = "Google Sans Flex"
 FONT_MED = "Google Sans Flex Medium"
@@ -260,12 +276,13 @@ def brief_slide(s):
         text(s, X0 + 1.02, y, 4.1, 0.8, [(body, {"size": 10})])
         y += 0.8
     box(s, 5.75, Y0, 3.9, 3.95, fill=BLUE_BG, radius=0.12)
-    text(s, 5.9, Y0 + 0.1, 3.6, 0.3, [("Live app: the Compliance Guard holds a risky message",
+    text(s, 5.9, Y0 + 0.1, 3.6, 0.3, [("Live app: a 3D customer, and the Guard holds a risky message",
                                         {"size": 9.5, "bold": True, "color": BLUE})])
-    fit_image(s, SHOTS / "crop_guard_full.png", 5.9, Y0 + 0.45, 3.6, 2.35)
+    fit_image(s, live("practice_guard"), 5.9, Y0 + 0.45, 3.6, 2.35)
     text(s, 5.9, Y0 + 2.95, 3.6, 0.9, [(
-        "The trainee types a guaranteed-return promise. The Guard quotes the phrase, names rule CC-01 and "
-        "offers Edit message or Send anyway.", {"size": 9.5, "color": INK})])
+        "Mr. Tan, a cautious retiree, is rendered as a 3D customer. The trainee types a guaranteed-return "
+        "promise; the Guard quotes the phrase, names rule CC-01 and offers Edit message or Send anyway.",
+        {"size": 9.5, "color": INK})])
 
 
 def opportunities_slide(s):
@@ -327,13 +344,13 @@ def features_slide(s):
 def process_slide(s):
     set_title(s, "Process flow diagram")
     steps = [
-        ("Build", "Admin / trainer", SHOTS / "crop_persona_cite.png",
+        ("Build", "Admin / trainer", live("persona_detail"),
          ["Upload manuals and policies", "Gemini drafts personas + scenarios with citations",
           "Trainer reviews and approves"]),
-        ("Practice", "Trainee", SHOTS / "crop_guard.png",
+        ("Practice", "Trainee", live("practice_guard"),
          ["Guard pre-checks each message (~1 s)", "AI customer streams a reply",
           "Grounding, state and coach run in parallel"]),
-        ("Prove", "Manager", SHOTS / "crop_dashboard_top.png",
+        ("Prove", "Manager", live("report"),
          ["Report with verified quotes", "Compliance gate (pass / fail)",
           "Readiness dashboard: who can go live"]),
     ]
@@ -348,17 +365,17 @@ def process_slide(s):
         if i < 2:
             arrow(s, x + w + 0.07, Y0 + 1.28, x + w + gap - 0.07, Y0 + 1.28, color=BLUE)
     caption(s, X0, Y0 + 3.8, 9.3,
-            "Screens from the deployed app: persona draft with citation chips, Compliance Guard card, "
-            "manager readiness view (sample team data, labeled in the app).")
+            "Screens from the deployed app: a persona grounded in cited sources, the 3D customer with the "
+            "Compliance Guard card, and the evidence-verified report.")
 
 
 def wireframes_slide(s):
     set_title(s, "Wireframes / mock diagrams of the proposed solution")
     shots = [
-        (SHOTS / "home.png", "Home: pick a scenario and start practicing"),
-        (SHOTS / "knowledge.png", "Knowledge base: upload manuals and policies"),
-        (SHOTS / "personas.png", "Personas: drafts and approved customers"),
-        (SHOTS / "scenario_detail.png", "Scenario: goal, rules and rubric with citations"),
+        (live("home"), "Home: what SkillCoach does, start the 3-minute demo"),
+        (live("knowledge"), "Knowledge base: upload manuals and policies, test a search"),
+        (live("persona_new"), "Persona builder: describe, generate from documents, or fill in"),
+        (live("scenarios"), "Scenarios: one customer, rubric and rules each"),
     ]
     w, h, gx = 4.56, 1.78, 0.18
     for i, (img, cap) in enumerate(shots):
@@ -518,20 +535,42 @@ def cost_slide(s):
     caption(s, X0, Y0 + 3.85, 9.3, "All figures are our own estimates and pricing hypotheses (docs/BUSINESS_CASE.md).")
 
 
-def snapshots_slide(s):
-    set_title(s, "Snapshots of the prototype")
-    shots = [
-        (MEDIA / "compliance-guard.png", "Practice: the Compliance Guard holds a risky promise (CC-01)"),
-        (SHOTS / "report.png", "Report: compliance gate failed; every score quotes a turn"),
-        (SHOTS / "persona_detail.png", "Generated persona: needs and objections cite the source"),
-        (SHOTS / "dashboard.png", "Manager readiness view (sample team data, labeled in the app)"),
-    ]
-    w, h, gx = 4.56, 1.78, 0.18
-    for i, (img, cap) in enumerate(shots):
-        x = X0 + (i % 2) * (w + gx)
-        y = Y0 + (i // 2) * (h + 0.32)
-        fit_image(s, img, x, y, w, h - 0.02)
-        caption(s, x, y + h + 0.01, w, cap, size=9)
+SNAPSHOT_PAGES = [
+    ("Snapshots of the prototype: practice", [
+        ("practice_start", "Mr. Tan as a 3D customer: he blinks, breathes, keeps eye contact and lip-syncs. "
+                           "His mood follows the trust and patience meters."),
+        ("practice_guard", "\"This plan guarantees you 8% a year\" is held before it is sent: the Guard quotes the "
+                           "words, names rule CC-01, and offers Edit message or Send anyway."),
+    ]),
+    ("Snapshots of the prototype: coaching and the report", [
+        ("practice_session", "Later in the session: trust has dropped, the coach suggests the next move, and every "
+                             "customer reply cites the knowledge base."),
+        ("report", "The report: one high-severity violation fails the compliance gate and caps the score "
+                   "(28 here), however good the rest was."),
+    ]),
+    ("Snapshots of the prototype: evidence", [
+        ("report_evidence", "Skills, with evidence: each score quotes the trainee's own words; select a quote to "
+                            "jump to that turn in the transcript."),
+        ("report_violations", "Compliance violations name the rule and the exact phrase; strengths and next steps "
+                              "turn the grade into a coaching plan."),
+    ]),
+    ("Snapshots of the prototype: knowledge and team", [
+        ("persona_detail", "An approved persona: profile, hidden needs and objections, each grounded in cited "
+                           "source passages."),
+        ("dashboard", "Manager readiness view: who is ready to go live, weakest skills, top violations "
+                      "(sample team data, labeled in the app)."),
+    ]),
+]
+
+
+def snapshots_slide(s, title, shots):
+    set_title(s, title)
+    w, gx = 4.56, 0.18
+    h = w * 900 / 1440
+    for i, (name, cap) in enumerate(shots):
+        x = X0 + i * (w + gx)
+        fit_image(s, live(name), x, Y0, w, h)
+        text(s, x, Y0 + h + 0.12, w, 0.9, [(cap, {"size": 10, "color": INK})])
 
 
 def performance_slide(s):
@@ -664,6 +703,27 @@ def sources_slide(s, title_template_slide):
 
 # ---------------------------------------------------------------- main
 
+def duplicate_slide(prs, index):
+    """Copy slide `index` (the template frame: header and footer art) right after itself."""
+    from pptx.opc.constants import RELATIONSHIP_TYPE as RT
+
+    r_embed = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed"
+    src = prs.slides[index]
+    new = prs.slides.add_slide(src.slide_layout)
+    for shp in list(new.shapes):
+        shp._element.getparent().remove(shp._element)
+    for shp in src.shapes:
+        el = copy.deepcopy(shp._element)
+        for blip in el.xpath(".//a:blip"):
+            blip.set(r_embed, new.part.relate_to(src.part.related_part(blip.get(r_embed)), RT.IMAGE))
+        new.shapes._spTree.append(el)
+    ids = prs.slides._sldIdLst
+    moved = list(ids)[-1]
+    ids.remove(moved)
+    ids.insert(index + 1, moved)
+    return new
+
+
 def delete_slide(prs, index):
     sld_ids = prs.slides._sldIdLst
     sld = list(sld_ids)[index]
@@ -683,7 +743,11 @@ def main():
     a = ap.parse_args()
 
     prs = Presentation(a.template)
+    # The template has one "Snapshots of the prototype" slide (index 10); add more.
+    for _ in SNAPSHOT_PAGES[1:]:
+        duplicate_slide(prs, 10)
     sl = list(prs.slides)
+    extra = len(SNAPSHOT_PAGES) - 1
     team_slide(sl[0], a.team, a.leader)
     brief_slide(sl[2])
     opportunities_slide(sl[3])
@@ -693,11 +757,12 @@ def main():
     architecture_slide(sl[7])
     technologies_slide(sl[8])
     cost_slide(sl[9])
-    snapshots_slide(sl[10])
-    performance_slide(sl[11])
-    future_slide(sl[12])
-    links_slide(sl[13], a.repo_url, a.video_url, a.app_url)
-    sources_slide(sl[14], sl[2])
+    for i, (title, shots) in enumerate(SNAPSHOT_PAGES):
+        snapshots_slide(sl[10 + i], title, shots)
+    performance_slide(sl[11 + extra])
+    future_slide(sl[12 + extra])
+    links_slide(sl[13 + extra], a.repo_url, a.video_url, a.app_url)
+    sources_slide(sl[14 + extra], sl[2])
     delete_slide(prs, 1)  # the template's "how to download" instruction slide
     prs.save(a.out)
     print("wrote", a.out)
