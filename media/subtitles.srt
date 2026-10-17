@@ -11,141 +11,173 @@ Role-play needs senior staff nobody can spare, and one wrong promise can cost a
 company dearly.
 
 4
-00:00:09,985 --> 00:00:13,731
+00:00:09,996 --> 00:00:13,742
 SkillCoach turns a company's own knowledge into realistic practice
 
 5
-00:00:13,731 --> 00:00:16,625
+00:00:13,742 --> 00:00:16,636
 conversations, powered by Gemini 4 on Google Cloud.
 
 6
-00:00:17,243 --> 00:00:20,643
+00:00:17,242 --> 00:00:20,642
 An admin uploads product brochures and policies.
 
 7
-00:00:22,184 --> 00:00:27,624
+00:00:22,136 --> 00:00:27,576
 Gemini 4 reads those documents and proposes realistic customer types.
 
 8
-00:00:30,488 --> 00:00:35,528
+00:00:30,443 --> 00:00:35,483
 Every objection and hidden need links back to the passage it came from.
 
 9
-00:00:36,109 --> 00:00:38,667
+00:00:36,068 --> 00:00:38,626
 A trainer checks the sources and approves.
 
 10
-00:00:38,667 --> 00:00:41,469
+00:00:38,626 --> 00:00:41,428
 Only approved customers are used for practice.
 
 11
-00:00:43,791 --> 00:00:46,537
-Now a new insurance advisor meets Mr.
+00:00:44,235 --> 00:00:46,296
+Scenarios are built the same way.
 
 12
-00:00:46,537 --> 00:00:48,319
-Tan, a cautious retiree.
+00:00:46,296 --> 00:00:51,294
+The goal, the compliance rules and the scoring rubric each point to a source, so
 
 13
-00:00:48,319 --> 00:00:50,471
-His first question is a trap.
+00:00:51,294 --> 00:00:54,355
+a trainer can check every rule before it is used.
 
 14
-00:00:53,544 --> 00:00:55,289
-Here's the costly mistake:
+00:00:57,539 --> 00:01:00,214
+Now a new insurance advisor meets Mr.
 
 15
-00:00:55,289 --> 00:00:57,301
-promising a guaranteed return.
+00:01:00,214 --> 00:01:05,202
+Tan, a cautious retiree, as a 3D customer who reacts to every answer.
 
 16
-00:00:57,301 --> 00:01:02,669
-Before it reaches the customer, the Compliance Guard stops it, quotes the words,
+00:01:05,202 --> 00:01:07,299
+His first question is a trap.
 
 17
-00:01:02,669 --> 00:01:03,944
-and names the rule.
+00:01:09,945 --> 00:01:11,690
+Here's the costly mistake:
 
 18
-00:01:04,295 --> 00:01:06,483
-Send it anyway, and trust drops.
+00:01:11,690 --> 00:01:13,702
+promising a guaranteed return.
 
 19
-00:01:06,483 --> 00:01:08,535
-The coach suggests a way back.
+00:01:13,702 --> 00:01:19,070
+Before it reaches the customer, the Compliance Guard stops it, quotes the words,
 
 20
-00:01:14,482 --> 00:01:16,962
-Pressure selling is flagged inline too.
+00:01:19,070 --> 00:01:20,345
+and names the rule.
 
 21
-00:01:19,986 --> 00:01:21,610
-An honest answer works better.
+00:01:20,708 --> 00:01:22,896
+Send it anyway, and trust drops.
 
 22
-00:01:21,610 --> 00:01:26,426
-The customer only states facts from the company's documents, with sources on every reply.
+00:01:22,896 --> 00:01:24,948
+The coach suggests a way back.
 
 23
-00:01:35,493 --> 00:01:38,530
-Each turn runs a pipeline of Gemini agents:
+00:01:35,976 --> 00:01:38,456
+Pressure selling is flagged inline too.
 
 24
-00:01:38,530 --> 00:01:43,333
-compliance judge, customer, grounding check, trust model, and coach.
+00:01:46,716 --> 00:01:48,340
+An honest answer works better.
 
 25
-00:01:45,443 --> 00:01:47,523
-Now, the report.
+00:01:48,340 --> 00:01:53,156
+The customer only states facts from the company's documents, with sources on every reply.
 
 26
-00:01:51,228 --> 00:01:54,865
-One forbidden promise fails the session, however good the rest was.
+00:02:04,542 --> 00:02:07,579
+Each turn runs a pipeline of Gemini agents:
 
 27
-00:01:54,865 --> 00:01:57,308
-The overall score cannot go above fifty-nine.
+00:02:07,579 --> 00:02:12,382
+compliance judge, customer, grounding check, trust model, and coach.
 
 28
-00:01:57,668 --> 00:02:03,482
-Every score quotes the trainee's own words, verified against the transcript.
+00:02:19,485 --> 00:02:21,565
+Now, the report.
 
 29
-00:02:03,482 --> 00:02:05,548
-No evidence, no high score.
+00:02:25,596 --> 00:02:29,233
+One forbidden promise fails the session, however good the rest was.
 
 30
-00:02:07,636 --> 00:02:10,966
-Managers see aggregates, never transcripts:
+00:02:29,233 --> 00:02:31,676
+The overall score cannot go above fifty-nine.
 
 31
-00:02:10,966 --> 00:02:15,148
-skill gaps, broken rules, and who is ready to go live.
+00:02:32,028 --> 00:02:37,842
+Every score quotes the trainee's own words, verified against the transcript.
 
 32
-00:02:15,148 --> 00:02:17,316
-Sample team data is labeled.
+00:02:37,842 --> 00:02:39,908
+No evidence, no high score.
 
 33
-00:02:19,387 --> 00:02:21,278
-Seven Gemini agent roles:
+00:02:40,269 --> 00:02:43,720
+Each violation names the rule and jumps to the exact turn.
 
 34
-00:02:21,278 --> 00:02:27,634
-Gemini 4 Argon for the customer, builder and report, Flash-Lite for the fast checks.
+00:02:43,720 --> 00:02:47,349
+Strengths and next steps turn the grade into a coaching plan.
 
 35
-00:02:27,634 --> 00:02:29,071
-The future of work:
+00:02:49,485 --> 00:02:52,815
+Managers see aggregates, never transcripts:
 
 36
-00:02:29,071 --> 00:02:32,627
-a tireless practice partner for every new hire.
+00:02:52,815 --> 00:02:56,997
+skill gaps, broken rules, and who is ready to go live.
 
 37
-00:02:34,227 --> 00:02:35,001
-SkillCoach.
+00:02:56,997 --> 00:02:59,165
+Sample team data is labeled.
 
 38
-00:02:35,001 --> 00:02:38,027
+00:03:01,238 --> 00:03:03,842
+Under the hood, it's all Google Cloud.
+
+39
+00:03:03,842 --> 00:03:08,640
+Firebase Hosting serves the app, and the web and API run on Cloud Run.
+
+40
+00:03:08,640 --> 00:03:12,683
+Firestore stores documents, personas, sessions and reports.
+
+41
+00:03:12,683 --> 00:03:15,561
+Seven Gemini agent roles run on Vertex AI:
+
+42
+00:03:15,561 --> 00:03:21,318
+Gemini 4 Argon for the customer, builder and report, Flash-Lite for the fast checks.
+
+43
+00:03:21,768 --> 00:03:22,937
+The future of work:
+
+44
+00:03:22,937 --> 00:03:28,288
+a tireless practice partner for every new hire, built from the company's own knowledge.
+
+45
+00:03:29,888 --> 00:03:30,662
+SkillCoach.
+
+46
+00:03:30,662 --> 00:03:33,688
 Practice the conversation before it counts.

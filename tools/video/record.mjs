@@ -177,7 +177,8 @@ async function prewarm() {
 async function run() {
   const headed = process.argv.includes('--headed');
   await prewarm();
-  const browser = await chromium.launch({ headless: !headed });
+  // Software WebGL so the 3D customer avatar renders in headless Chromium.
+  const browser = await chromium.launch({ headless: !headed, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const context = await browser.newContext({ viewport: { width: WIDTH, height: HEIGHT }, deviceScaleFactor: 1 });
   await context.addInitScript(presentationScript, ZOOM);
   const page = await context.newPage();
