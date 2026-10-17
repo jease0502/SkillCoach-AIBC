@@ -7,3 +7,4 @@ out/
 *.tsbuildinfo
 .env
 .env.local
+public/mediapipe/wasm/

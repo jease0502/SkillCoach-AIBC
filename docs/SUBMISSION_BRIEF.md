@@ -6,7 +6,7 @@ Text for the "brief description" field of the AI Builder Cup form. About 250 wor
 
 **SkillCoach** is an AI role-play coach for customer-facing teams in regulated industries (insurance, banking, sales and support). New hires practice realistic customer conversations before they meet real customers. Every practice customer, rule and score is grounded in the company's own documents.
 
-An admin uploads manuals and policies. Gemini drafts customer personas and practice scenarios that cite the source passages, and a trainer approves them. During practice, a **Compliance Guard** checks each message before it is sent. It quotes the risky phrase (for example, "guarantees you 8% a year") and names the rule. A coach gives a one-line hint on every turn. In live call mode the trainee turns on the camera and simply talks to a 3D customer, who answers out loud. The final report quotes the trainee's own words for every score, and one serious violation fails the session. Managers see who is ready to go live.
+An admin uploads manuals and policies. Gemini drafts customer personas and practice scenarios that cite the source passages, and a trainer approves them. During practice, a **Compliance Guard** checks each message before it is sent. It quotes the risky phrase (for example, "guarantees you 8% a year") and names the rule. A coach gives a one-line hint on every turn. In live call mode the trainee turns on the camera (with background blur or a virtual background) and simply talks to a 3D customer, who answers out loud, while on-device face tracking reads their expression and eye contact. The final report quotes the trainee's own words for every score, and one serious violation fails the session. Managers see who is ready to go live.
 
 **How we use Google Cloud**
 

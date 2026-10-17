@@ -7,6 +7,7 @@
 - Drops morph-target normals (lighting barely changes for small face shapes).
 - Downscales textures to --max-texture pixels and re-encodes them as JPEG
   (PNG is kept when the image has transparency).
+- Attaches the embedded normal maps that no material used.
 - Flips the V texture coordinate (the Rocketbox export kept FBX's bottom-up V).
 - Rewrites the binary chunk with only the data that is still referenced.
 
@@ -68,6 +69,24 @@ def fix_meta_license(doc: dict) -> None:
         if meta.get("licenseUrl"):
             meta.setdefault("otherLicenseUrl", meta["licenseUrl"])
         meta["licenseUrl"] = VRM_LICENSE
+
+
+def attach_normal_maps(doc: dict) -> None:
+    """The Rocketbox export embeds `<part>_normal` images but no material uses them;
+    wire each one to the material whose base colour is `<part>_color...`, so skin and
+    cloth get their surface detail back."""
+    images = doc.get("images", [])
+    textures = doc.get("textures", [])
+    tex_of_image = {t.get("source"): i for i, t in enumerate(textures)}
+    normals = {img.get("name", "").split("_normal")[0]: i for i, img in enumerate(images) if "_normal" in img.get("name", "")}
+    for mat in doc.get("materials", []):
+        base = mat.get("pbrMetallicRoughness", {}).get("baseColorTexture")
+        if not base or "normalTexture" in mat:
+            continue
+        name = images[textures[base["index"]]["source"]].get("name", "")
+        image_index = normals.get(name.split("_color")[0])
+        if image_index is not None and image_index in tex_of_image:
+            mat["normalTexture"] = {"index": tex_of_image[image_index], "scale": 1.0}
 
 
 def prune_morph_targets(doc: dict) -> None:
@@ -279,6 +298,7 @@ def main() -> None:
     a = ap.parse_args()
     doc, bin_ = read_glb(a.src)
     fix_meta_license(doc)
+    attach_normal_maps(doc)
     doc["extensions"]["VRMC_vrm"]["meta"]["name"] = a.dst.stem.replace("_", " ")
     if not a.no_flip_v:
         bin_ = flip_v(doc, bin_)

@@ -4,3 +4,6 @@ out
 *.tsbuildinfo
 .env
 .env.local
+
+# MediaPipe runtime, copied from node_modules at build time (npm run copy-mediapipe)
+public/mediapipe/wasm/

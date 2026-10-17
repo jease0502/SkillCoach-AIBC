@@ -573,7 +573,7 @@ export const mockApi = {
     await sleep(150);
     return clone(db().sessions.find((x) => x.id === id) ?? notFound('Session'));
   },
-  async delivery(_id: string, _image: string, _text: string): Promise<DeliveryFeedback> {
+  async delivery(_id: string, _image: string, _text: string, _cues?: unknown): Promise<DeliveryFeedback> {
     await sleep(600);
     return {
       eye_contact: 'good',

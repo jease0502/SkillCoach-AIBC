@@ -34,8 +34,9 @@ import { FlagList, HighlightedText, TurnBubble } from '@/components/transcript';
 import { useToast } from '@/components/toast';
 import { DemoGuide } from '@/components/demo-guide';
 import { CustomerAvatar } from '@/components/customer-avatar';
-import { DeliveryCard, SelfView, useSpeakingFlag, type SelfViewHandle } from '@/components/live-call';
-import { avatarModelUrl, moodFromMeters } from '@/lib/avatar';
+import { CameraPanel, DeliveryCard, SelfView, useSpeakingFlag, type SelfViewHandle } from '@/components/live-call';
+import { CueAccumulator, EMOTION_LABEL, type BackgroundMode, type CueSummary, type FaceCues } from '@/lib/face-vision';
+import { avatarBackdrop, avatarModelUrl, moodFromMeters } from '@/lib/avatar';
 import { GenerationProgress, REPORT_NOTE, REPORT_STAGES } from '@/components/generation-progress';
 
 type StepKey = 'compliance' | 'customer' | 'grounding' | 'state' | 'coach';
@@ -109,6 +110,19 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
   const liveRef = useRef(live);
   liveRef.current = live;
   const liveSubmitRef = useRef<(text: string) => void>(() => {});
+  const [background, setBackground] = useState<BackgroundMode>('blur');
+  const [cues, setCues] = useState<FaceCues | null>(null);
+  const [turnCues, setTurnCues] = useState<CueSummary | null>(null);
+  const cueAcc = useRef<CueAccumulator | null>(null);
+  const lastCueUpdate = useRef(0);
+  const onCues = useCallback((c: FaceCues) => {
+    (cueAcc.current ??= new CueAccumulator()).add(c);
+    const now = performance.now();
+    if (now - lastCueUpdate.current > 200) {
+      lastCueUpdate.current = now;
+      setCues(c);
+    }
+  }, []);
   const customerSpeaking = useSpeakingFlag(onSpeechActivity);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -375,9 +389,12 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
   const liveSubmit = (text: string) => {
     const frame = selfRef.current?.capture();
     if (frame && text.trim() && !busy && !checking && status === 'active') {
+      const summary = cueAcc.current?.summary() ?? null;
+      cueAcc.current?.reset();
+      setTurnCues(summary);
       setDeliveryPending(true);
       api
-        .delivery(sessionId, frame, text.trim())
+        .delivery(sessionId, frame, text.trim(), summary)
         .then(setDelivery)
         .catch(() => {})
         .finally(() => setDeliveryPending(false));
@@ -705,6 +722,7 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
           <Card className="relative overflow-hidden p-0">
             <CustomerAvatar
               modelUrl={avatarModelUrl(persona)}
+              backdrop={avatarBackdrop(persona)}
               name={persona.name}
               streaming={streamText !== null && !voiceOut}
               mood={moodFromMeters(meters.trust, meters.patience, meters.trust_delta)}
@@ -712,7 +730,13 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
             />
             {live && (
               <>
-                <SelfView ref={selfRef} className="absolute bottom-3 right-3 h-24 w-32" onError={(m) => toast('error', m)} />
+                <SelfView
+                  ref={selfRef}
+                  background={background}
+                  onCues={onCues}
+                  className="absolute bottom-3 right-3 h-24 w-32"
+                  onError={(m) => toast('error', m)}
+                />
                 <span
                   aria-live="polite"
                   className={cn(
@@ -734,7 +758,14 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
               </>
             )}
           </Card>
-          {live && <DeliveryCard feedback={delivery} pending={deliveryPending} />}
+          {live && <CameraPanel background={background} onBackground={setBackground} cues={cues} />}
+          {live && (
+            <DeliveryCard
+              feedback={delivery}
+              pending={deliveryPending}
+              turnCues={turnCues ? `Last turn: eye contact ${Math.round(turnCues.eye_contact * 100)}%, mostly ${EMOTION_LABEL[turnCues.dominant].toLowerCase()}, face visible ${Math.round(turnCues.face_visible * 100)}% of the time.` : null}
+            />
+          )}
           {showDemo && (
             <DemoGuide
               traineeTurns={traineeTurns}

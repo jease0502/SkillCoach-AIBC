@@ -393,8 +393,26 @@ def _decode_frame(image: str) -> tuple[bytes, str]:
     return data, mime
 
 
-async def delivery_feedback(session_id: str, image: str, text: str = "") -> DeliveryFeedback:
-    """Live mode: non-verbal delivery feedback from one webcam frame. Nothing is stored."""
+def _cue_lines(cues: dict | None) -> str:
+    """Compact, bounded text for the on-device cue summary (numbers only, no free text)."""
+    if not cues:
+        return ""
+    def num(k: str) -> float | None:
+        v = cues.get(k)
+        return round(float(v), 2) if isinstance(v, (int, float)) else None
+    parts = [f"{k}={num(k)}" for k in ("face_visible", "eye_contact", "smile", "brow_furrow", "blinks_per_min")
+             if num(k) is not None]
+    emotions = cues.get("emotions") if isinstance(cues.get("emotions"), dict) else {}
+    top = sorted(((str(k)[:12], float(v)) for k, v in emotions.items() if isinstance(v, (int, float))),
+                 key=lambda kv: kv[1], reverse=True)[:3]
+    if top:
+        parts.append("emotions=" + ", ".join(f"{k} {v:.2f}" for k, v in top))
+    return "\nOn-device face tracking over the whole turn (MediaPipe, 0-1 scales): " + "; ".join(parts)
+
+
+async def delivery_feedback(session_id: str, image: str, text: str = "", cues: dict | None = None) -> DeliveryFeedback:
+    """Live mode: non-verbal delivery feedback from one webcam frame (plus optional on-device
+    cue summary for the whole turn). Nothing is stored."""
     data, mime = _decode_frame(image)
     rec = await load_record(session_id)
     _scenario, persona = await load_context(rec.session)
@@ -402,6 +420,7 @@ async def delivery_feedback(session_id: str, image: str, text: str = "") -> Deli
         f"Customer: {persona.name}, {persona.title}. Customer trust {rec.session.trust}/100, "
         f"patience {rec.session.patience}/100.\n"
         f"What the trainee said in this turn: {text.strip()[:600] or '(not given)'}"
+        f"{_cue_lines(cues)}"
     )
     return await deps.generate_json(
         prompt, DeliveryFeedback, system=prompts.DELIVERY_SYSTEM, model=deps.lite_model(),

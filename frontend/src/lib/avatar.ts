@@ -42,6 +42,14 @@ export function avatarModelUrl(p: Persona): string {
   return `/avatars/${model}.vrm`;
 }
 
+/** Setting behind the customer: a bank branch for advice, an office for B2B, a home study otherwise. */
+export function avatarBackdrop(p: Persona): string {
+  const text = `${p.avatar ?? ''} ${p.industry ?? ''} ${p.title}`.toLowerCase();
+  if (/retiree|insur|bank|financ|wealth|pension|advis/.test(text)) return '/backgrounds/branch.jpg';
+  if (/exec|cfo|ceo|manager|director|saas|logistic|procure|b2b/.test(text)) return '/backgrounds/office.jpg';
+  return '/backgrounds/study.jpg';
+}
+
 export type AvatarMood = 'neutral' | 'happy' | 'relaxed' | 'angry' | 'sad' | 'surprised';
 
 /** Facial mood from the customer-state meters and the last change. */

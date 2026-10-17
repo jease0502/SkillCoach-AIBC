@@ -87,13 +87,15 @@ async def precheck(session_id: str, body: TurnRequest) -> PrecheckResponse:
 class DeliveryRequest(BaseModel):
     image: str  # base64 JPEG or PNG, optionally as a data: URL
     text: str = ""
+    # On-device MediaPipe summary of the whole turn (eye contact, emotions, blinks); optional.
+    cues: dict | None = None
 
 
 @router.post("/sessions/{session_id}/delivery", response_model=DeliveryFeedback)
 async def delivery(session_id: str, body: DeliveryRequest) -> DeliveryFeedback:
     """Live mode: Gemini looks at one camera frame of the trainee. The frame is not stored."""
     try:
-        return await orchestrator.delivery_feedback(session_id, body.image, body.text)
+        return await orchestrator.delivery_feedback(session_id, body.image, body.text, body.cues)
     except SessionError as e:
         raise _http(e)
 

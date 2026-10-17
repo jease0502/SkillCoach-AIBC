@@ -329,7 +329,7 @@ def features_slide(s):
         ("Trust and patience meters", "The customer's state updates every turn, so trainees see the effect of their words."),
         ("Evidence-verified report", "Each score quotes the trainee's words. No verified evidence caps a skill at 50; a serious violation caps the total at 59."),
         ("Manager readiness view", "Team dashboard: ready-to-go-live count, weakest skills and top compliance violations."),
-        ("Live video call", "Camera on, hands-free voice with a 3D customer that lip-syncs and shows its mood; Gemini reviews eye contact and expression."),
+        ("Live video call", "Camera with background blur or virtual backgrounds, hands-free voice, on-device emotion and eye-contact tracking, Gemini delivery tips."),
     ]
     w, h, gx, gy = 2.98, 1.12, 0.18, 0.14
     for i, (t, b) in enumerate(feats):
@@ -482,7 +482,7 @@ def technologies_slide(s):
         ("Cloud Run", "two stateless services: Next.js web and FastAPI API, autoscaling, min 1 instance."),
         ("Firestore", "all state: documents, vector chunks, personas, scenarios, sessions, reports."),
         ("Firebase", "Hosting serves the public URL and rewrites traffic to Cloud Run."),
-        ("Also", "Python 3.12, Next.js 15, React, Server-Sent Events, Web Speech API."),
+        ("Also", "Python 3.12, Next.js 15, three.js VRM avatar, MediaPipe on-device vision, Web Speech API."),
     ]:
         paras.append([(head + ": ", {"size": 9.5, "bold": True, "color": BLUE}), (body, {"size": 9.5})])
     text(s, x + 0.14, Y0 + 0.12, w - 0.26, 3.6, paras, space_after=6)
@@ -616,7 +616,7 @@ def future_slide(s):
                                  "Document-generated personas with citations and approval",
                                  "Multi-agent turns: guard, customer, grounding, state, coach",
                                  "Evidence-verified reports, manager readiness view"]),
-        ("Next (planned)", False, ["Gemini Live native voice", "Avatar lip-sync from real audio", "On-device emotion cues", "More APAC languages"]),
+        ("Next (planned)", False, ["Gemini Live native voice", "Avatar lip-sync from real audio", "Delivery trends in the report", "More APAC languages"]),
         ("Later (planned)", False, ["LMS and CRM integration", "Scenarios from anonymized real calls",
                                     "Certification tracks", "Calibration against senior assessors"]),
     ]

@@ -12,6 +12,8 @@ type Props = {
   /** True while the customer's reply text is streaming in (lip-sync without audio). */
   streaming: boolean;
   mood: AvatarMood;
+  /** Photo behind the customer (softly blurred), e.g. a bank branch. */
+  backdrop?: string;
   className?: string;
 };
 
@@ -25,7 +27,7 @@ const MOOD_WEIGHT: Record<AvatarMood, number> = { neutral: 0, happy: 0.55, relax
  * lip-sync while the reply streams or is spoken, and a facial mood from the trust meter.
  * Falls back to the initials avatar when WebGL or the model is unavailable.
  */
-export function CustomerAvatar({ modelUrl, name, streaming, mood, className }: Props) {
+export function CustomerAvatar({ modelUrl, name, streaming, mood, backdrop, className }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const live = useRef({ streaming, mood, speaking: false, kick: 0 });
   live.current.streaming = streaming;
@@ -53,6 +55,7 @@ export function CustomerAvatar({ modelUrl, name, streaming, mood, className }: P
     (async () => {
       const THREE = await import('three');
       const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+      const { RoomEnvironment } = await import('three/examples/jsm/environments/RoomEnvironment.js');
       const { VRMLoaderPlugin, VRMUtils } = await import('@pixiv/three-vrm');
       if (disposed) return;
 
@@ -66,16 +69,45 @@ export function CustomerAvatar({ modelUrl, name, streaming, mood, className }: P
       }
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.outputColorSpace = THREE.SRGBColorSpace;
+      // Neutral tone mapping keeps fabric and skin colours; image-based lighting adds soft highlights.
+      renderer.toneMapping = THREE.NeutralToneMapping;
+      renderer.toneMappingExposure = 0.85;
       renderer.domElement.setAttribute('aria-hidden', 'true');
       renderer.domElement.className = 'block h-full w-full';
       host.appendChild(renderer.domElement);
 
       const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(24, 1, 0.05, 50);
-      scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 1.6));
-      const key = new THREE.DirectionalLight(0xffffff, 1.6);
-      key.position.set(0.6, 1.8, 2.2);
+      const camera = new THREE.PerspectiveCamera(22, 1, 0.05, 50);
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      // Portrait lighting: warm key, cool soft fill, rim light to separate from the background.
+      scene.add(new THREE.HemisphereLight(0xfff4e8, 0x5a6270, 0.35));
+      const key = new THREE.DirectionalLight(0xfff5ea, 2.0);
+      key.position.set(0.9, 1.7, 1.9);
       scene.add(key);
+      const fill = new THREE.DirectionalLight(0xdfe8ff, 0.7);
+      fill.position.set(-1.4, 1.2, 1.3);
+      scene.add(fill);
+      const rim = new THREE.DirectionalLight(0xffffff, 1.6);
+      rim.position.set(-0.4, 1.9, -1.6);
+      scene.add(rim);
+      if (backdrop) {
+        const img = new Image();
+        img.onload = () => {
+          if (disposed) return;
+          const c = document.createElement('canvas');
+          c.width = 960;
+          c.height = Math.round((960 * img.naturalHeight) / img.naturalWidth);
+          const g = c.getContext('2d');
+          if (!g) return;
+          g.filter = 'blur(6px) brightness(0.92)';
+          g.drawImage(img, 0, 0, c.width, c.height);
+          const tex = new THREE.CanvasTexture(c);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          scene.background = tex;
+        };
+        img.src = backdrop;
+      }
 
       const resize = () => {
         const w = host.clientWidth || 1;
@@ -106,6 +138,19 @@ export function CustomerAvatar({ modelUrl, name, streaming, mood, className }: P
       VRMUtils.rotateVRM0(vrm);
       vrm.scene.traverse((o) => {
         o.frustumCulled = false;
+        const mesh = o as import('three').Mesh;
+        if (!mesh.isMesh) return;
+        for (const mat of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+          const m = mat as import('three').MeshStandardMaterial;
+          if (!m.isMeshStandardMaterial) continue;
+          const skin = /head/i.test(m.name);
+          m.roughness = skin ? 0.52 : /opacity/i.test(m.name) ? 0.65 : 0.78;
+          m.metalness = 0;
+          m.envMapIntensity = skin ? 0.22 : 0.12;
+          // The export flipped V, so the normal maps' green channel points the other way.
+          if (m.normalMap) m.normalScale.set(0.85, -0.85);
+          m.needsUpdate = true;
+        }
       });
       scene.add(vrm.scene);
 
@@ -125,8 +170,8 @@ export function CustomerAvatar({ modelUrl, name, streaming, mood, className }: P
       const head = bone('head');
       const headPos = new THREE.Vector3();
       head?.getWorldPosition(headPos);
-      const target = headPos.clone().add(new THREE.Vector3(0, 0.01, 0));
-      camera.position.set(target.x, target.y + 0.03, target.z + 1.25);
+      const target = headPos.clone().add(new THREE.Vector3(0, 0.0, 0));
+      camera.position.set(target.x + 0.06, target.y + 0.04, target.z + 1.32);
       camera.lookAt(target);
 
       const gaze = new THREE.Object3D();
@@ -140,6 +185,9 @@ export function CustomerAvatar({ modelUrl, name, streaming, mood, className }: P
       const em = vrm.expressionManager;
       const moodLevel: Record<string, number> = Object.fromEntries(MOODS.map((m) => [m, 0]));
       let blinkAt = performance.now() + 1500;
+      // Small eye saccades around the camera every 0.6-2.4 s, as people do in conversation.
+      let saccadeAt = 0;
+      const saccade = new THREE.Vector2();
       let mouth = 0;
       let viseme = 0;
       let nextSyllable = 0;
@@ -161,7 +209,11 @@ export function CustomerAvatar({ modelUrl, name, streaming, mood, className }: P
           neck.rotation.y = Math.sin(t * 0.37) * 0.05 * sway;
           neck.rotation.x = Math.sin(t * 0.53) * 0.025 * sway + (talking ? Math.sin(t * 5.1) * 0.012 : 0);
         }
-        gaze.position.set(camera.position.x + Math.sin(t * 0.31) * 0.08, camera.position.y + Math.sin(t * 0.23) * 0.04, camera.position.z);
+        if (now >= saccadeAt) {
+          saccade.set((Math.random() - 0.5) * 0.09, (Math.random() - 0.5) * 0.05);
+          saccadeAt = now + 600 + Math.random() * 1800;
+        }
+        gaze.position.set(camera.position.x + saccade.x + Math.sin(t * 0.31) * 0.03, camera.position.y + saccade.y, camera.position.z);
 
         if (em) {
           // Blink every 2.5-6 s.
@@ -197,6 +249,7 @@ export function CustomerAvatar({ modelUrl, name, streaming, mood, className }: P
 
       cleanup = () => {
         ro.disconnect();
+        pmrem.dispose();
         scene.remove(vrm.scene);
         VRMUtils.deepDispose(vrm.scene);
         renderer.dispose();
@@ -209,7 +262,8 @@ export function CustomerAvatar({ modelUrl, name, streaming, mood, className }: P
       cancelAnimationFrame(frame);
       cleanup();
     };
-  }, [modelUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modelUrl, backdrop]);
 
   return (
     <div className={cn('relative overflow-hidden rounded-xl bg-gradient-to-b from-slate-100 to-slate-200', className)}>

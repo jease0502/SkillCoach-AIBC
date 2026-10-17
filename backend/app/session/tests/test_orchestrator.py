@@ -398,7 +398,9 @@ def test_delivery_sends_the_frame_to_the_lite_model_and_stores_nothing(llm):
     async def go():
         await seed()
         s = await orchestrator.create_session("s1")
-        fb = await orchestrator.delivery_feedback(s.id, f"data:image/png;base64,{PNG_1PX}", "Hello Dana")
+        fb = await orchestrator.delivery_feedback(s.id, f"data:image/png;base64,{PNG_1PX}", "Hello Dana",
+                                                  {"eye_contact": 0.42, "emotions": {"happy": 0.6, "sad": 0.1},
+                                                   "note": "ignored free text"})
         after = (await orchestrator.load_record(s.id)).session
         return fb, after
     fb, after = run(go())
@@ -407,6 +409,8 @@ def test_delivery_sends_the_frame_to_the_lite_model_and_stores_nothing(llm):
     assert call["model"] == deps.lite_model()
     assert call["images"][0][1] == "image/png" and call["images"][0][0].startswith(b"\x89PNG")
     assert "Hello Dana" in call["prompt"]
+    assert "eye_contact=0.42" in call["prompt"] and "happy 0.60" in call["prompt"]
+    assert "ignored free text" not in call["prompt"]
     assert len(after.turns) == 1  # nothing stored
 
 

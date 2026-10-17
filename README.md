@@ -63,6 +63,7 @@ SkillCoach lets an employee practice a realistic conversation, by text or voice,
 | Manager dashboard: aggregates plus session summaries (no transcripts) and a "Ready to go live" count | Core (basic) |
 | Browser voice (Web Speech API): speech-to-text input and spoken customer replies; text mode always available | Shipped |
 | Native voice via Gemini Live API (low-latency, interruptible) | Planned |
+| On-device camera processing in live calls (MediaPipe Tasks Vision, in the browser): background blur or virtual backgrounds (office, branch, study), and real-time expression and emotion detection from 52 face blendshapes (8 emotions, eye contact from gaze and head pose, blink rate); the per-turn summary is sent with the Gemini delivery check, the video is not uploaded | Shipped |
 | Live call mode: the trainee's camera next to the 3D customer, hands-free voice turns (speak, the reply is spoken back, the mic reopens), and per-turn delivery feedback where Gemini 3.5 Flash-Lite reviews one camera frame for eye contact, expression and posture (frames are not stored; Chrome or Edge for voice) | Shipped |
 | 3D customer avatar on the practice screen (three.js + three-vrm, VRM 1.0): idle breathing, blinking, eye contact, lip sync while the reply streams or is spoken, facial mood driven by the trust and patience meters; initials fallback without WebGL | Shipped |
 | On-device facial emotion cues (MediaPipe, browser only, no video leaves the device) | Planned |
@@ -198,6 +199,8 @@ PROJECT_ID=<project-id> ./infra/deploy-firebase.sh                            # 
 | --- | --- | --- |
 | [Microsoft Rocketbox](https://github.com/microsoft/Microsoft-Rocketbox) | 7 customer avatar characters, exported to VRM and slimmed to 3-5 MB each by [tools/avatars/slim_vrm.py](tools/avatars/slim_vrm.py); files in `frontend/public/avatars/` | MIT |
 | [three.js](https://github.com/mrdoob/three.js) | WebGL rendering of the customer avatar | MIT |
+| [MediaPipe Tasks Vision](https://github.com/google-ai-edge/mediapipe) (`@mediapipe/tasks-vision`, Face Landmarker and Selfie Segmenter models, self-hosted in `frontend/public/mediapipe/`) | On-device background effects and expression cues in live calls | Apache-2.0 |
+| Virtual backgrounds (`frontend/public/backgrounds/`) | Generated for this project with an image model; no people or logos | Project asset |
 | [@pixiv/three-vrm](https://github.com/pixiv/three-vrm) | VRM 1.0 loading, expressions, look-at and lip sync | MIT |
 
 Attribution details: [NOTICE](NOTICE).

@@ -1,5 +1,6 @@
 import { parseSSE } from './sse';
 import { mockApi } from './mock/engine';
+import type { CueSummary } from './face-vision';
 import type {
   DeliveryFeedback,
   ComplianceFlag,
@@ -131,8 +132,8 @@ const httpApi = {
     yield* parseSSE(res.body);
   },
   /** Live mode: non-verbal delivery feedback on one camera frame (a JPEG data URL). */
-  delivery: (id: string, image: string, text: string) =>
-    request<DeliveryFeedback>(`/api/sessions/${id}/delivery`, json({ image, text })),
+  delivery: (id: string, image: string, text: string, cues?: CueSummary | null) =>
+    request<DeliveryFeedback>(`/api/sessions/${id}/delivery`, json({ image, text, cues: cues ?? null })),
   endSession: (id: string) => request<Report>(`/api/sessions/${id}/end`, { method: 'POST' }),
   getReport: (id: string) => request<Report>(`/api/sessions/${id}/report`),
 

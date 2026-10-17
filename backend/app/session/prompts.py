@@ -193,6 +193,8 @@ def state_prompt(persona: Persona, turns: list[Turn], *, trust: int, patience: i
 DELIVERY_SYSTEM = (
     "You coach the non-verbal delivery of a trainee practising a customer conversation on a video call. "
     "You see one webcam frame taken while the trainee spoke, plus what they said and the customer's mood. "
+    "You may also get on-device face-tracking numbers for the whole turn; prefer them over the single frame "
+    "for eye contact and overall expression, and use the frame to explain what to change. "
     "Judge only what the frame shows: eye contact with the camera, facial expression, posture and framing. "
     "Never comment on appearance, clothing, age, gender, ethnicity, background objects or anything personal; "
     "never guess identity or emotions beyond what the face plainly shows. If the face is not visible or the "
