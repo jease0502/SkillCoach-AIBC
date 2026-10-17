@@ -25,7 +25,7 @@ frontend/           Next.js 15 App Router + TypeScript + Tailwind (owner: web)
 | Var | Default | Notes |
 |---|---|---|
 | `GOOGLE_GENAI_USE_VERTEXAI` | `true` | Vertex AI via ADC on Cloud Run; set `false` + `GEMINI_API_KEY` for AI Studio key |
-| `GOOGLE_CLOUD_PROJECT` | - | required for Vertex (dev: `project-6d34f8a9-8150-4e6a-ae7`) |
+| `GOOGLE_CLOUD_PROJECT` | - | required for Vertex (deployed: `nestor-dev-tw`) |
 | `GOOGLE_CLOUD_LOCATION` | `global` | Gemini 3.x models are only served from `global` (verified 2026-10-15) |
 | `GEMINI_EMBED_LOCATION` | `asia-east1` | embeddings endpoint, next to Cloud Run (about 170 ms vs 1.1 s on `us-central1`) |
 | `GEMINI_API_KEY` | - | only when not using Vertex |
@@ -33,11 +33,11 @@ frontend/           Next.js 15 App Router + TypeScript + Tailwind (owner: web)
 | `GEMINI_LITE_MODEL` | `gemini-3.5-flash-lite` | per-turn judgments: precheck, grounding, state, coach |
 | `GEMINI_PRO_MODEL` | `gemini-4-argon` | final report; fallbacks in `GEMINI_PRO_FALLBACKS` (`gemini-3.1-pro-preview,gemini-2.5-pro`) |
 | `GEMINI_EMBED_MODEL` | `gemini-embedding-001` | `output_dimensionality=768` (Firestore max 2048) |
-| `GOOGLE_APPLICATION_CREDENTIALS` | - | local dev on Windows only: `\\wsl.localhost\Ubuntu-22.04\home\lin\.config\gcloud\legacy_credentials\jease@gta-robotics.com\adc.json`. Never copy it into the repo. Cloud Run uses its service account. |
+| `GOOGLE_APPLICATION_CREDENTIALS` | - | local dev only: set it to an ADC file outside the repo, or use `gcloud auth application-default login` instead. Never copy credentials into the repo. Cloud Run uses its service account. |
 | `STORE_BACKEND` | `memory` | `memory` or `firestore` |
 | `CORS_ORIGINS` | `*` | |
 | `EMBED_DIMENSIONS` | `768` | embedding output size |
-| `FIRESTORE_DATABASE` | `(default)` | Firestore database id |
+| `FIRESTORE_DATABASE` | `(default)` | Firestore database id; the deployed app uses the named database `skillcoach` so it can share a project with other apps |
 | `LLM_FAKE` | `false` | dev/tests: canned LLM output + hash embeddings |
 | `NEXT_PUBLIC_MOCK` | `false` | frontend: local fixtures + fake SSE |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8080` | frontend |

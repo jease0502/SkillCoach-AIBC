@@ -8,7 +8,7 @@
 # Deploy the API first (./infra/deploy.sh).
 set -euo pipefail
 
-PROJECT_ID="${PROJECT_ID:-project-6d34f8a9-8150-4e6a-ae7}"
+PROJECT_ID="${PROJECT_ID:?set PROJECT_ID to your GCP project id}"
 REGION="${REGION:-asia-east1}"
 SERVICE="${SERVICE:-skillcoach-web}"
 API_SERVICE="${API_SERVICE:-skillcoach-api}"

@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     google_genai_use_vertexai: bool = Field(True, alias="GOOGLE_GENAI_USE_VERTEXAI")
-    google_cloud_project: str | None = Field("project-6d34f8a9-8150-4e6a-ae7", alias="GOOGLE_CLOUD_PROJECT")
+    google_cloud_project: str | None = Field(None, alias="GOOGLE_CLOUD_PROJECT")
     google_cloud_location: str = Field("global", alias="GOOGLE_CLOUD_LOCATION")
     gemini_api_key: str | None = Field(None, alias="GEMINI_API_KEY")
 

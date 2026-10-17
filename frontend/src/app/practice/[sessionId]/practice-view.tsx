@@ -31,6 +31,8 @@ import { Avatar, Badge, Button, Card, CitationList, DifficultyDots, ErrorState, 
 import { FlagList, HighlightedText, TurnBubble } from '@/components/transcript';
 import { useToast } from '@/components/toast';
 import { DemoGuide } from '@/components/demo-guide';
+import { CustomerAvatar } from '@/components/customer-avatar';
+import { avatarModelUrl, moodFromMeters } from '@/lib/avatar';
 import { GenerationProgress, REPORT_NOTE, REPORT_STAGES } from '@/components/generation-progress';
 
 type StepKey = 'compliance' | 'customer' | 'grounding' | 'state' | 'coach';
@@ -628,6 +630,15 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
 
         {/* Side panel */}
         <aside className="flex flex-col gap-4" aria-label="Session insights">
+          <Card className="overflow-hidden p-0">
+            <CustomerAvatar
+              modelUrl={avatarModelUrl(persona)}
+              name={persona.name}
+              streaming={streamText !== null && !voiceOut}
+              mood={moodFromMeters(meters.trust, meters.patience, meters.trust_delta)}
+              className="h-64 rounded-none"
+            />
+          </Card>
           {showDemo && (
             <DemoGuide
               traineeTurns={traineeTurns}

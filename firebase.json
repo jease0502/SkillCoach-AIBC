@@ -1,0 +1,12 @@
+{
+  "hosting": {
+    "site": "skillcoach-aibc",
+    "public": "infra/firebase-public",
+    "rewrites": [
+      {
+        "source": "**",
+        "run": { "serviceId": "skillcoach-web", "region": "asia-east1" }
+      }
+    ]
+  }
+}

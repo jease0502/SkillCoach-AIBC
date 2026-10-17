@@ -19,7 +19,7 @@ node compose.mjs            # 4. Cut, align voice to the recording, captions, en
 - `synth.mjs` calls `texttospeech.googleapis.com` with `gcloud auth print-access-token` and the project from `gcloud config get-value project`. You can override them with `GOOGLE_ACCESS_TOKEN` and `GOOGLE_CLOUD_PROJECT`. The voice is `en-US-Chirp3-HD-Charon` (set in `cues.json`, or use `--voice`/`--rate`). `--only c08_guard` re-voices a single cue.
 - `node synth.mjs --draft` uses the offline Windows voice. It is only for timing dry runs; never ship it.
 - `record.mjs` paces itself on the voiceover durations, so run it **after** `synth.mjs`. Add `--headed` to watch. It approves a generated persona as part of the story and deletes it again at the end. It leaves one real practice session on the live site.
-- `compose.mjs` prints the final length and warns if any cue overlaps another or if the video is longer than 2:59.5.
+- `compose.mjs` prints the final length and warns if any cue overlaps another or if the video is outside 3:00.5-3:59.5 (the AI Builder Cup asks for a 3 to 4 minute demo).
 
 ## How to rebuild
 
@@ -35,9 +35,9 @@ Before recording:
 - Pre-warm both Cloud Run services (open the site once) so the first turn has no cold start.
 - Start from a clean dashboard. Each recording leaves one real practice session on the live site; delete the sessions of discarded takes.
 - If the run stops with "Compliance Guard did not appear", the precheck took longer than 2.5 s. Run it again.
-- Check the result: `compose.mjs` must print no overlap warnings and a length under 2:59.5. Look at the frames around the Compliance Guard, the pipeline trace and the dashboard.
+- Check the result: `compose.mjs` must print no overlap warnings and a length between 3:00.5 and 3:59.5. Look at the frames around the Compliance Guard, the pipeline trace and the dashboard.
 
-The published take (2:46) used `en-US-Chirp3-HD-Charon` at rate 1.0 and practice session `5867b49a17`.
+The published take uses `en-US-Chirp3-HD-Charon` at rate 1.0.
 
 ## Files
 

@@ -5,13 +5,16 @@
 #   PROJECT_ID=... REGION=asia-east1 ./infra/gcp-setup.sh
 set -euo pipefail
 
-PROJECT_ID="${PROJECT_ID:-project-6d34f8a9-8150-4e6a-ae7}"
+PROJECT_ID="${PROJECT_ID:?set PROJECT_ID to your GCP project id}"
 REGION="${REGION:-asia-east1}"
 SA_NAME="${SA_NAME:-skillcoach-api}"
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 FIRESTORE_LOCATION="${FIRESTORE_LOCATION:-$REGION}"
+# A named database keeps SkillCoach data apart when the project hosts other apps.
+FIRESTORE_DATABASE="${FIRESTORE_DATABASE:-(default)}"
 
-gcloud config set project "$PROJECT_ID"
+# Scope every gcloud call to this project without changing the global config.
+export CLOUDSDK_CORE_PROJECT="$PROJECT_ID"
 
 echo "==> Enabling APIs"
 gcloud services enable \
@@ -39,11 +42,11 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --role="roles/cloudbuild.builds.builder" --condition=None --quiet >/dev/null
 echo "    granted roles/cloudbuild.builds.builder to the default compute SA (source builds)"
 
-echo "==> Firestore (Native mode) in $FIRESTORE_LOCATION"
-if gcloud firestore databases describe --database="(default)" >/dev/null 2>&1; then
-  echo "    (default) database already exists"
+echo "==> Firestore (Native mode) database $FIRESTORE_DATABASE in $FIRESTORE_LOCATION"
+if gcloud firestore databases describe --database="$FIRESTORE_DATABASE" >/dev/null 2>&1; then
+  echo "    $FIRESTORE_DATABASE database already exists"
 else
-  gcloud firestore databases create --database="(default)" \
+  gcloud firestore databases create --database="$FIRESTORE_DATABASE" \
     --location="$FIRESTORE_LOCATION" --type=firestore-native
 fi
 
@@ -52,9 +55,9 @@ echo "==> Firestore index exemptions"
 # memory (app/kb/search.py), so they must NOT be auto-indexed: indexing every
 # array element would cost 768 index entries per chunk. Long text fields are
 # never filtered on either.
-gcloud firestore indexes fields update vector --collection-group=embeddings --disable-indexes --quiet
-gcloud firestore indexes fields update text --collection-group=chunks --disable-indexes --quiet
-gcloud firestore indexes fields update turns --collection-group=sessions --disable-indexes --quiet
+gcloud firestore indexes fields update vector --collection-group=embeddings --database="$FIRESTORE_DATABASE" --disable-indexes --quiet
+gcloud firestore indexes fields update text --collection-group=chunks --database="$FIRESTORE_DATABASE" --disable-indexes --quiet
+gcloud firestore indexes fields update turns --collection-group=sessions --database="$FIRESTORE_DATABASE" --disable-indexes --quiet
 # All app queries are single-field equality filters (e.g. chunks.document_id),
 # which Firestore's automatic single-field indexes already cover: no composite
 # indexes are needed.

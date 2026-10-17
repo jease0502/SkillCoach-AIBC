@@ -1,0 +1,28 @@
+SkillCoach
+Copyright 2026 The SkillCoach authors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It includes or depends on the following third-party components, each under its
+own licence:
+
+1. Microsoft Rocketbox avatar library
+   https://github.com/microsoft/Microsoft-Rocketbox
+   Copyright (c) Microsoft Corporation. MIT License.
+   Used: 7 characters, exported to VRM 1.0 and slimmed by
+   tools/avatars/slim_vrm.py (unused morph targets removed, morph targets stored
+   sparse, textures downsized, V texture coordinate corrected, VRM licence field
+   set). Files: frontend/public/avatars/*.vrm
+
+2. three.js
+   https://github.com/mrdoob/three.js
+   Copyright (c) the three.js authors. MIT License.
+   Used: WebGL rendering of the customer avatar (npm dependency).
+
+3. @pixiv/three-vrm
+   https://github.com/pixiv/three-vrm
+   Copyright (c) pixiv Inc. MIT License.
+   Used: VRM loading, expressions, look-at and lip sync (npm dependency).
+
+The full MIT licence text for each component is distributed with the upstream
+project and its npm package.

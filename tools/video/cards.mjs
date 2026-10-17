@@ -37,7 +37,7 @@ const cards = {
     <p style="font-size:30px;font-weight:600;color:#4338ca">Architecture</p>
     <div style="display:grid;grid-template-columns:1fr 1.05fr 1.5fr;gap:36px;align-items:stretch">
       <div class="box" style="padding:36px">
-        <p style="font-size:24px;font-weight:600" class="muted">Cloud Run &middot; asia-east1</p>
+        <p style="font-size:24px;font-weight:600" class="muted">Firebase Hosting &rarr; Cloud Run</p>
         <p style="font-size:40px;font-weight:700;margin-top:10px">Next.js web app</p>
         <p style="font-size:26px;margin-top:18px" class="muted">Practice, Compliance Guard, reports, manager view. Streamed replies over SSE.</p>
       </div>
@@ -45,7 +45,7 @@ const cards = {
         <p style="font-size:24px;font-weight:600" class="muted">Cloud Run &middot; asia-east1</p>
         <p style="font-size:40px;font-weight:700;margin-top:10px">FastAPI backend</p>
         <p style="font-size:26px;margin-top:18px" class="muted">Retrieval with gemini-embedding-001. Evidence verification. Compliance gate.</p>
-        <p style="font-size:26px;margin-top:18px;font-weight:600">Firestore</p>
+        <p style="font-size:26px;margin-top:18px;font-weight:600">Firestore: documents, personas, sessions, reports</p>
       </div>
       <div class="box" style="padding:36px;border-color:#c7d2fe">
         <p style="font-size:24px;font-weight:600;color:#4338ca">Vertex AI &middot; 7 Gemini agent roles</p>

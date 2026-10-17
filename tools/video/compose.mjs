@@ -5,7 +5,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { BUILD, CARDS_DIR, FPS, FRAMES_DIR, HEIGHT, MEDIA, VO_DIR, WIDTH, cues, readJson } from './paths.mjs';
 
-const LIMIT = 179.5;
+// The AI Builder Cup asks for a 3 to 4 minute demo.
+const MIN_LENGTH = 180.5;
+const LIMIT = 239.5;
 const durations = readJson(path.join(VO_DIR, 'durations.json'));
 const timeline = readJson(path.join(FRAMES_DIR, 'timeline.json'));
 const list = cues().cues;
@@ -41,7 +43,9 @@ ffmpeg(['-f', 'concat', '-safe', '0', '-i', 'frames.txt', '-vf', `scale=${WIDTH}
 const LEAD_IN = 0.8;
 const card = (name, cueId, tail) => ({ name, cueId, dur: LEAD_IN + durations[cueId] + tail });
 const title = card('title', 'c01_title', 0.9);
-const arch = card('arch', 'c17_arch', 0.8);
+// The architecture card carries two cues, with a short pause between them.
+const ARCH_GAP = 0.45;
+const arch = card('arch', 'c17_arch', ARCH_GAP + durations.c17b_future + 0.8);
 const endCard = card('end', 'c18_end', 2.6);
 for (const c of [title, arch, endCard]) {
   ffmpeg([
@@ -60,6 +64,7 @@ const placed = [
   { id: 'c01_title', at: LEAD_IN },
   ...timeline.marks.map((m) => ({ id: m.id, at: screenAt + toVideo(m.t) })),
   { id: 'c17_arch', at: archAt + LEAD_IN },
+  { id: 'c17b_future', at: archAt + LEAD_IN + durations.c17_arch + ARCH_GAP },
   { id: 'c18_end', at: endAt + LEAD_IN },
 ];
 
@@ -165,3 +170,4 @@ const final = probe(out);
 const voice = readJson(path.join(VO_DIR, 'source.json'));
 console.log(`demo.mp4: ${final.toFixed(1)} s (${Math.floor(final / 60)}:${String(Math.round(final % 60)).padStart(2, '0')}), voice: ${voice.engine}`);
 if (final > LIMIT) console.warn(`WARNING: longer than ${LIMIT} s`);
+if (final < MIN_LENGTH) console.warn(`WARNING: shorter than ${MIN_LENGTH} s`);

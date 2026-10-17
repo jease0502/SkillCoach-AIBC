@@ -16,7 +16,9 @@ one API service, one web app, one database, one model family.
   generation on the Vertex AI `global` endpoint; embeddings in `asia-east1`,
   next to Cloud Run and Firestore
 - Compute: Cloud Run in `asia-east1` (`skillcoach-api` from `backend/`, `skillcoach-web` from `frontend/`)
-- Data: Firestore in `asia-east1` (documents, chunks with vectors, personas, scenarios, sessions, reports)
+- Public URL: Firebase Hosting (site `skillcoach-aibc`, https://skillcoach-aibc.web.app,
+  config in `firebase.json`) rewrites every path to `skillcoach-web`
+- Data: Firestore in `asia-east1`, named database `skillcoach` (`FIRESTORE_DATABASE`) (documents, chunks with vectors, personas, scenarios, sessions, reports)
 - Secrets: Secret Manager
 
 **Endpoints, SSE event names, env var names and Pydantic models are defined
@@ -36,7 +38,10 @@ flowchart LR
     subgraph Browser
         W[frontend<br/>Next.js 15 App Router]
         WS[Web Speech API<br/>STT + speechSynthesis]
+        AV[3D customer avatar<br/>three.js + three-vrm]
     end
+
+    FH[Firebase Hosting<br/>skillcoach-aibc.web.app]
 
     subgraph CloudRun["Cloud Run"]
         WEB[skillcoach-web<br/>Next.js standalone]
@@ -60,7 +65,8 @@ flowchart LR
         LOG[Cloud Logging<br/>+ Trace]
     end
 
-    W -- HTTPS --> WEB
+    W -- HTTPS --> FH
+    FH -- "rewrite **" --> WEB
     W -- "REST + SSE (POST /api/sessions/{id}/turns)" --> API
     WS -. "final transcript as text" .-> W
     API --> Session
@@ -99,7 +105,9 @@ Design rules the rest of this document depends on:
 
 | Component | Path | Responsibility |
 |---|---|---|
-| Web app | `frontend/` | Upload docs, generate/edit personas and scenarios, practice room (chat + optional voice), live coach panel, report view, manager dashboard |
+| Web app | `frontend/` | Upload docs, generate/edit personas and scenarios, practice room (chat + optional voice + 3D customer avatar), live coach panel, report view, manager dashboard |
+| Customer avatar | `frontend/src/components/customer-avatar.tsx`, `frontend/src/lib/avatar.ts`, `frontend/public/avatars/` | VRM 1.0 rendering, model choice per persona, mood from the meters (section 9) |
+| Hosting | `firebase.json`, `infra/deploy-firebase.sh` | Firebase Hosting site `skillcoach-aibc`, rewrites every path to `skillcoach-web` |
 | App factory | `backend/app/main.py`, `config.py` | Routers, CORS (`CORS_ORIGINS`), settings |
 | Gemini wrapper | `backend/app/llm/` | The four functions above; retries, timeouts, token logging |
 | Store | `backend/app/store/` | `put/get/list/delete` over `memory` or `firestore` |
@@ -116,8 +124,7 @@ hackathon-sized corpus runs inline in the upload request and finishes in seconds
 ## 3. Models
 
 The contract defines three model env vars and two location env vars. The
-defaults below were verified against the project
-(`project-6d34f8a9-8150-4e6a-ae7`) on 2026-10-15.
+defaults below were verified on 2026-10-15.
 
 | Env var | Default | Used by |
 |---|---|---|
@@ -559,6 +566,22 @@ PCM audio over a WebSocket. Compliance, scorer and coach run asynchronously
 on the transcripts. The browser never connects to Gemini directly (that
 would need a client-side credential). Build this only after the text demo
 is deployed and recorded.
+
+**3D customer avatar (shipped, frontend only).** The practice screen renders
+the customer as a VRM 1.0 character with three.js and `@pixiv/three-vrm`
+(`frontend/src/components/customer-avatar.tsx`). It breathes and blinks at
+idle, keeps eye contact, lip-syncs while the reply streams or is spoken by
+`speechSynthesis`, and sets a facial expression (happy, relaxed, angry, sad,
+surprised) from the trust and patience meters (`moodFromMeters` in
+`frontend/src/lib/avatar.ts`). Seed personas name a preset in `avatar`
+(`preset-retiree`: older man, `preset-executive`: woman in her 40s,
+`preset-casual`: young man); generated personas get a model by age and by the
+pronouns in their text. Without WebGL the initials avatar is shown. The 7
+models are Microsoft Rocketbox characters (MIT) exported to VRM and slimmed
+from 23-34 MB to 3-5 MB each by `tools/avatars/slim_vrm.py` (keeps only the
+morph targets used by VRM expressions, stores them sparse, downsizes
+textures, flips the V texture coordinate the FBX export got wrong, sets the
+VRM licence field). No backend change.
 
 ---
 

@@ -1,8 +1,8 @@
 # SkillCoach: Pitch Deck Content
 
-Final slide content for the PDF deck (Google Cloud AI Builder Cup 2026, theme **Future of Work & Enterprise Productivity**). English only, 12 slides, one message per slide. Outline from [HACKATHON.md](HACKATHON.md) section 4; statistics from [BUSINESS_CASE.md](BUSINESS_CASE.md), where `[Sn]` refers to its Sources section (put the source list on the last page or in slide footers). Numbers labeled **(estimate)** are our own model, not facts.
+Final slide content for the PDF deck (Google Cloud AI Builder Cup 2026, theme **Future of Work & Enterprise Productivity**). The submitted deck uses the official AI Builder Cup submission template: [media/SkillCoach_Submission.pptx](../media/SkillCoach_Submission.pptx) and [media/SkillCoach_Submission.pdf](../media/SkillCoach_Submission.pdf), built by `tools/deck/build_submission_deck.py` from `Submission Template _ AI Builder Cup.pptx` (the older `media/SkillCoach_Deck.pptx/.pdf` is superseded). English only, 12 slides, one message per slide. Outline from [HACKATHON.md](HACKATHON.md) section 4; statistics from [BUSINESS_CASE.md](BUSINESS_CASE.md), where `[Sn]` refers to its Sources section (put the source list on the last page or in slide footers). Numbers labeled **(estimate)** are our own model, not facts.
 
-Measured numbers come from the deployed build (Cloud Run `asia-east1`, real Gemini, 2026-10-16):
+Measured numbers come from the deployed build (Cloud Run `asia-east1`, real Gemini, 2026-10-16; the app has since been redeployed to a new Google Cloud project):
 
 | Measurement | Value | Where it was measured |
 | --- | --- | --- |
@@ -12,9 +12,9 @@ Measured numbers come from the deployed build (Cloud Run `asia-east1`, real Gemi
 | Compliance Guard (`/precheck`) | 0.86-1.33 s | live, `gemini-3.5-flash-lite` |
 | End-of-session report | 6.1 s at `/end` (cold, no speculative draft) | live, `gemini-4-argon` (lead's measurement) |
 | Persona / scenario generation | 18-40 s (18-29 s from a brief, 36-40 s for 3 personas from documents, 26-30 s for a scenario); 106 of 106 citations verified | live, `gemini-4-argon`, two runs, 2026-10-16 |
-| Scenario A (sales, high-score path) | overall **94**, compliance PASS on `gemini-4-argon` (session `034508c874`); 100 in 2 of 2 earlier runs on the 3.8 Flash build | [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
-| Scenario B (insurance, guaranteed return) | compliance **FAIL**, score capped (**30** in the recorded run, session `5867b49a17`; gate caps at 59) | recorded demo run on the deployed web app |
-| Scenario C (support escalation) | overall **68**, RR-01 (medium) flag, then recovery and gift reveal, compliance passed, on `gemini-4-argon` (session `3ca9d80201`); 81 in 2 of 2 earlier runs on the 3.8 Flash build | [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
+| Scenario A (sales, high-score path) | overall **94**, compliance PASS on `gemini-4-argon`; 100 in 2 of 2 earlier runs on the 3.8 Flash build | [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
+| Scenario B (insurance, guaranteed return) | compliance **FAIL**, score capped (**30** in the recorded run; gate caps at 59) | recorded demo run on the deployed web app |
+| Scenario C (support escalation) | overall **68**, RR-01 (medium) flag, then recovery and gift reveal, compliance passed, on `gemini-4-argon`; 81 in 2 of 2 earlier runs on the 3.8 Flash build | [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
 
 Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem Alignment & Impact (25%), **N** = Innovation & Creativity (25%), **U** = UX & Solution Design (10%).
 
@@ -26,7 +26,7 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 
 - AI customers built from your company's own documents, a Compliance Guard on every message, and scores that quote your words.
 - Google Cloud AI Builder Cup 2026, theme: Future of Work & Enterprise Productivity.
-- `[Team name]` · live demo https://skillcoach-web-817759648389.asia-east1.run.app · video `[URL]` · GitHub https://github.com/jease0502/SkillCoach-AIBC
+- `[Team name]` · live demo https://skillcoach-aibc.web.app · video `[URL]` · GitHub https://github.com/jease0502/SkillCoach-AIBC
 
 **Speaker notes.** Customer-facing work is one of the largest parts of the workforce, and new hires still learn it on real customers. SkillCoach gives every new hire a realistic practice customer and a coach, built from the company's own manuals and rulebooks, and running on Gemini and Cloud Run today. Everything in this deck is in the deployed build unless it is labeled "planned".
 
@@ -88,9 +88,9 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 
 **Same engine, three industries, three different outcomes.**
 
-- **A. SaaS sales, pricing objection:** the trainee uncovers the real concern (adoption, not price), answers with product facts and books a pilot. **Overall 94, compliance PASS** on the Argon build (session `034508c874`).
-- **B. Insurance, guaranteed-return trap:** "this plan guarantees you 8% a year" is held back by the Compliance Guard (rule CC-01, high). Sent anyway, it **fails the session**: score capped (30 in the recorded run, session `5867b49a17`).
-- **C. Support escalation:** a refund promise outside policy is flagged (RR-01, medium); the trainee recovers, and the customer reveals the story behind the anger. **Overall 68**, compliance passed, on the Argon build (session `3ca9d80201`).
+- **A. SaaS sales, pricing objection:** the trainee uncovers the real concern (adoption, not price), answers with product facts and books a pilot. **Overall 94, compliance PASS** on the Argon build.
+- **B. Insurance, guaranteed-return trap:** "this plan guarantees you 8% a year" is held back by the Compliance Guard (rule CC-01, high). Sent anyway, it **fails the session**: score capped (30 in the recorded run).
+- **C. Support escalation:** a refund promise outside policy is flagged (RR-01, medium); the trainee recovers, and the customer reveals the story behind the anger. **Overall 68**, compliance passed, on the Argon build.
 
 **Speaker notes.** These are not replays. Every customer line is generated live by Gemini, so the wording changes each time, but the behaviors are stable because they are anchored in seed data: verbatim opening lines, explicit compliance rules with citations, and objections tied to triggers. In A, a good discovery question makes the CFO admit her team abandoned the last tool, and the trainee closes on a pilot with a date. In B, the Guard stops a guaranteed-return promise before it reaches the customer. In C, the customer only shares that the headphones were a birthday gift after the trainee apologizes, offers real options and asks gently. That is the soft skill we want to train.
 
@@ -102,15 +102,16 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 
 ## Slide 6. Architecture
 
-**Next.js and FastAPI on Cloud Run, Gemini on Vertex AI, Firestore for state: all managed Google Cloud.**
+**Next.js and FastAPI on Cloud Run behind Firebase Hosting, Gemini on Vertex AI, Firestore for state: all managed Google Cloud.**
 
+- Firebase Hosting (https://skillcoach-aibc.web.app): the public URL; rewrites every path to the web service on Cloud Run.
 - Cloud Run (`asia-east1`): `skillcoach-web` (Next.js) and `skillcoach-api` (FastAPI, Server-Sent Events for streaming turns).
 - Vertex AI: Gemini 3.x generation on the `global` endpoint (`google-genai` SDK); `gemini-embedding-001` in `asia-east1`, next to Cloud Run.
-- Firestore (`asia-east1`): documents, chunks with vectors, personas, scenarios, sessions, reports.
+- Firestore (`asia-east1`, named database `skillcoach`): documents, chunks with vectors, personas, scenarios, sessions, reports.
 
 **Speaker notes.** The system has no servers to manage and no custom model training. The frontend and API are stateless Cloud Run services that autoscale. Every turn is one HTTP request that streams events back to the browser: the compliance pre-check, the customer's reply token by token, the grounding post-check, the trust and patience meters, and the coach hint. Retrieval takes about 0.25 seconds on the live service. Data at rest and embeddings stay in the APAC region we choose; Gemini generation runs through the Vertex AI global endpoint, and we say exactly that to buyers [S27].
 
-**Visual.** Architecture diagram: Browser → Cloud Run web → Cloud Run API → (Vertex AI Gemini `global`; `gemini-embedding-001` and Firestore in `asia-east1`). Underneath, the per-turn pipeline as a timeline: `precheck` (~1 s) → retrieval (~0.25 s) → persona stream (first token ~2-2.7 s) → grounding + state + coach in parallel → `done` (~5 s).
+**Visual.** Architecture diagram: Browser → Firebase Hosting → Cloud Run web → Cloud Run API → (Vertex AI Gemini `global`; `gemini-embedding-001` and Firestore in `asia-east1`). Underneath, the per-turn pipeline as a timeline: `precheck` (~1 s) → retrieval (~0.25 s) → persona stream (first token ~2-2.7 s) → grounding + state + coach in parallel → `done` (~5 s).
 
 **Criteria.** **T** (mandatory platform use, engineering quality).
 
@@ -148,7 +149,7 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 
 - **Before sending:** the Compliance Guard quotes the exact phrase and names the rule (CC-01, "guarantees you 8% a year").
 - **While talking:** persona drafts, scenario rules and rubric items all cite the source passage; a trainer approves every persona before use.
-- **After the session:** quotes are verified against the transcript; a high-severity violation sets `compliance_passed = false` and caps the score at 59 (Scenario B: FAIL, 30 in the recorded run, session `5867b49a17`).
+- **After the session:** quotes are verified against the transcript; a high-severity violation sets `compliance_passed = false` and caps the score at 59 (Scenario B: FAIL, 30 in the recorded run).
 
 **Speaker notes.** In regulated industries, an AI score nobody can explain is a score nobody will accept, not the trainee, not HR and not the Compliance Officer. So trust is designed in at three points. The compliance gate mirrors real life: a great conversation with one forbidden promise still fails. This kind of explainability is what regional regulators ask for in their AI guidance [S13] and what MAS's competence expectations need as evidence [S29].
 
@@ -208,11 +209,11 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 
 ## Slide 12. Roadmap and team
 
-**Now shipped: text practice, browser voice (Web Speech: speech-to-text input and spoken customer replies), document-generated personas with approval, multi-agent turns, evidence-verified reports, manager readiness view.**
+**Now shipped: text practice, browser voice (Web Speech: speech-to-text input and spoken customer replies), a 3D customer avatar (VRM, lip sync, mood from the trust and patience meters), document-generated personas with approval, multi-agent turns, evidence-verified reports, manager readiness view.**
 
-- **Next (planned):** Gemini Live native voice, a VRM avatar, on-device emotion cues, more APAC languages.
+- **Next (planned):** Gemini Live native voice, on-device emotion cues, more APAC languages.
 - **Later (planned):** LMS and CRM integration, scenarios from anonymized real calls, certification tracks, calibration against senior assessors.
-- **Team:** `[Name, role, one-line background]` × N · live demo https://skillcoach-web-817759648389.asia-east1.run.app · video `[URL]` · GitHub https://github.com/jease0502/SkillCoach-AIBC
+- **Team:** `[Name, role, one-line background]` × N · live demo https://skillcoach-aibc.web.app · video `[URL]` · GitHub https://github.com/jease0502/SkillCoach-AIBC
 
 **Speaker notes.** Everything under "Now" is in the deployed build and in the video. Everything else is labeled planned, and the next step is a paid 8-week pilot with a control cohort and pre-agreed KPIs. SkillCoach: practice the conversation before it counts.
 
@@ -232,4 +233,4 @@ Criteria key used below: **T** = Technical Merit & GenAI (40%), **I** = Problem 
 | UX & Solution Design (10%) | 4 Solution, 5 Demo, 12 Roadmap |
 | Theme: Future of Work | 1, 2, 9 |
 
-Before export: replace the remaining `[...]` placeholders (team name, members, video URL), add the source list ([BUSINESS_CASE.md](BUSINESS_CASE.md) section 12, S1-S30 as cited) as the final page, and take screenshots from the live Cloud Run URL, not localhost.
+Before export: replace the remaining `[...]` placeholders (team name, members, video URL), add the source list ([BUSINESS_CASE.md](BUSINESS_CASE.md) section 12, S1-S30 as cited) as the final page, and take screenshots from the live URL (https://skillcoach-aibc.web.app), not localhost.

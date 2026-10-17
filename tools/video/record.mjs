@@ -235,7 +235,20 @@ async function run() {
     personaId = page.url().split('/').pop();
     await rec.quiet(-0.4);
 
+    // ---------- Scenario: rules and rubric with sources ----------
+    await moveTo(page, page.getByRole('link', { name: 'Scenarios', exact: true }).first());
+    await moveTo(page, page.getByRole('link', { name: /^Edit Retirement/ }));
+    await page.getByRole('complementary', { name: 'Save and practice' }).waitFor();
+    await sleep(0.4);
+    await rec.cue('c06b_scenario');
+    await scrollBy(page, 620, 2.4);
+    await scrollBy(page, 620, 2.4);
+    await scrollBy(page, 620, 2.2);
+    await rec.quiet(-0.6);
+
     // ---------- Practice: scenario B ----------
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    await sleep(0.6);
     await moveTo(page, page.getByRole('link', { name: 'Scenarios', exact: true }).first());
     await moveTo(page, page.getByRole('button', { name: /^Start practice: Retirement/ }));
     await page.waitForURL(/\/practice\//, { timeout: 60_000 });
@@ -310,6 +323,14 @@ async function run() {
     await rec.cue('c15_evidence');
     await moveTo(page, page.getByRole('button', { name: /Turn \d+ →/ }).first());
     await sleep(3);
+    await rec.quiet(-0.4);
+    await rec.cue('c15b_violations');
+    const violations = page.getByRole('heading', { name: /Compliance violations/ });
+    await violations.evaluate((h) => h.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+    await sleep(1.2);
+    await moveTo(page, violations, { click: false });
+    await sleep(2.5);
+    await scrollBy(page, 420, 2);
     await rec.quiet(-0.4);
 
     // ---------- Dashboard ----------

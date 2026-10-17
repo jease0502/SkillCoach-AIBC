@@ -10,8 +10,8 @@ export const VO_DIR = path.join(BUILD, 'vo');
 export const FRAMES_DIR = path.join(BUILD, 'frames');
 export const CARDS_DIR = path.join(BUILD, 'cards');
 
-export const SITE = process.env.SKILLCOACH_WEB ?? 'https://skillcoach-web-817759648389.asia-east1.run.app';
-export const API = process.env.SKILLCOACH_API ?? 'https://skillcoach-api-817759648389.asia-east1.run.app';
+export const SITE = process.env.SKILLCOACH_WEB ?? 'https://skillcoach-aibc.web.app';
+export const API = process.env.SKILLCOACH_API ?? 'https://skillcoach-api-506140624406.asia-east1.run.app';
 export const REPO_URL = process.env.SKILLCOACH_REPO ?? '';
 
 export const WIDTH = 1920;

@@ -1,15 +1,40 @@
 # Deployment
 
 How to deploy SkillCoach to Google Cloud: `skillcoach-api` (from `backend/`)
-and `skillcoach-web` (from `frontend/`) on Cloud Run, Gemini on Vertex AI,
-data in Firestore, the optional fallback key in Secret Manager. See
+and `skillcoach-web` (from `frontend/`) on Cloud Run, Firebase Hosting in
+front of the web service for the public URL, Gemini on Vertex AI, data in a
+named Firestore database, the optional fallback key in Secret Manager. See
 [architecture](architecture.md) and [ADR-0001](adr/0001-gemini-on-cloud-run.md)
 for the reasoning, and [API_CONTRACT.md](API_CONTRACT.md) for the
 authoritative env var names.
 
 All commands are bash. On Windows use Cloud Shell or Git Bash.
 
-Locations at a glance (verified against the project on 2026-10-15):
+Current deployment (project `nestor-dev-tw`, region `asia-east1`, redeployed
+2026-10-17):
+
+| What | URL |
+|---|---|
+| Public app (Firebase Hosting site `skillcoach-aibc`, rewrites every path to `skillcoach-web`) | https://skillcoach-aibc.web.app |
+| Cloud Run web (`skillcoach-web`) | https://skillcoach-web-506140624406.asia-east1.run.app |
+| Cloud Run API (`skillcoach-api`) | https://skillcoach-api-506140624406.asia-east1.run.app |
+
+Scripted path (the scripts require `PROJECT_ID`; there is no default, and they
+scope gcloud with `CLOUDSDK_CORE_PROJECT` instead of changing your gcloud
+config). Run them in this order:
+
+```bash
+PROJECT_ID=<project-id> FIRESTORE_DATABASE=skillcoach ./infra/gcp-setup.sh   # APIs, service account, Firestore database
+PROJECT_ID=<project-id> FIRESTORE_DATABASE=skillcoach ./infra/deploy.sh      # API on Cloud Run
+PROJECT_ID=<project-id> EXTRA_ORIGINS=https://skillcoach-aibc.web.app,https://skillcoach-aibc.firebaseapp.com \
+  ./infra/deploy-web.sh                                                       # web on Cloud Run, API CORS updated
+PROJECT_ID=<project-id> ./infra/deploy-firebase.sh                            # Firebase Hosting (section 7.3)
+```
+
+The rest of this document is the manual equivalent and the reference for
+settings.
+
+Locations at a glance (verified on 2026-10-15):
 
 | What | Location | Why |
 |---|---|---|
@@ -37,13 +62,15 @@ leaves Taiwan.
 Set shell variables once:
 
 ```bash
-export PROJECT_ID=project-6d34f8a9-8150-4e6a-ae7   # dev project; use your own
+export PROJECT_ID=<your-project-id>                # deployed instance: nestor-dev-tw
 export REGION=asia-east1                           # Cloud Run + Firestore + Artifact Registry
+export FIRESTORE_DATABASE=skillcoach               # named database; "(default)" also works
 export API_SA=skillcoach-api@${PROJECT_ID}.iam.gserviceaccount.com
 export WEB_SA=skillcoach-web@${PROJECT_ID}.iam.gserviceaccount.com
 
-gcloud config set project $PROJECT_ID
-gcloud config set run/region $REGION
+# Scope gcloud to this project and region without changing the global config
+export CLOUDSDK_CORE_PROJECT=$PROJECT_ID
+export CLOUDSDK_RUN_REGION=$REGION
 ```
 
 ---
@@ -64,7 +91,9 @@ gcloud services enable \
 ```
 
 Add `generativelanguage.googleapis.com` only if you use the Developer API
-fallback, and `firebase.googleapis.com` only if you use Firebase Hosting/Auth.
+fallback. `firebasehosting.googleapis.com` is enabled by
+`infra/deploy-firebase.sh` (section 7.3); the project must already be a
+Firebase project.
 
 Quick model check before writing code (from your machine, with ADC):
 
@@ -93,18 +122,19 @@ whole deploy, you can also pin `GEMINI_FAST_MODEL=gemini-3.8-flash` and
 ## 3. Firestore and the vector index
 
 ```bash
-# Firestore Native mode, default database, in asia-east1
-gcloud firestore databases create --location=$REGION --type=firestore-native
+# Firestore Native mode, named database, in asia-east1
+# (a named database keeps SkillCoach data apart when the project hosts other apps)
+gcloud firestore databases create --database=$FIRESTORE_DATABASE --location=$REGION --type=firestore-native
 
 # Vector index on chunks.embedding (dimension must match the embed() wrapper: 768)
 gcloud firestore indexes composite create \
   --collection-group=chunks \
   --query-scope=COLLECTION \
   --field-config=field-path=embedding,vector-config='{"dimension":"768","flat":"{}"}' \
-  --database="(default)"
+  --database=$FIRESTORE_DATABASE
 
 # Watch until state is READY (can take several minutes)
-gcloud firestore indexes composite list
+gcloud firestore indexes composite list --database=$FIRESTORE_DATABASE
 ```
 
 Until the index is `READY`, deploy with `STORE_BACKEND=memory` (data is then
@@ -217,7 +247,7 @@ gcloud run deploy skillcoach-api \
   --timeout 300 \
   --min-instances 0 --max-instances 3 \
   --cpu-boost \
-  --set-env-vars "GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GEMINI_EMBED_LOCATION=asia-east1,GEMINI_FAST_MODEL=gemini-4-argon,GEMINI_LITE_MODEL=gemini-3.5-flash-lite,GEMINI_PRO_MODEL=gemini-3.1-pro-preview,GEMINI_EMBED_MODEL=gemini-embedding-001,STORE_BACKEND=firestore,CORS_ORIGINS=*"
+  --set-env-vars "GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GEMINI_EMBED_LOCATION=asia-east1,GEMINI_FAST_MODEL=gemini-4-argon,GEMINI_LITE_MODEL=gemini-3.5-flash-lite,GEMINI_PRO_MODEL=gemini-3.1-pro-preview,GEMINI_EMBED_MODEL=gemini-embedding-001,STORE_BACKEND=firestore,FIRESTORE_DATABASE=$FIRESTORE_DATABASE,CORS_ORIGINS=*"
 
 export API_URL=$(gcloud run services describe skillcoach-api --region $REGION --format='value(status.url)')
 curl -s $API_URL/healthz        # {"ok": true}
@@ -258,30 +288,49 @@ export WEB_URL=$(gcloud run services describe skillcoach-web --region $REGION --
 The `cloud-run-source-deploy` repository in `$REGION` is created by the
 first `--source` deploy of the API (7.1); create it with
 `gcloud artifacts repositories create` if you deploy the web service first.
-Rebuild the image whenever the API URL changes. Firebase Hosting is an
-equivalent alternative only if the frontend becomes a pure static export.
+Rebuild the image whenever the API URL changes.
 
-### 7.3 Lock down CORS
+### 7.3 Firebase Hosting (public URL)
+
+Firebase Hosting serves the public URL (https://skillcoach-aibc.web.app) and
+rewrites every path to the `skillcoach-web` Cloud Run service, so the
+Next.js server still renders every page. The config is `firebase.json` at the
+repository root (site `skillcoach-aibc`).
+
+```bash
+PROJECT_ID=$PROJECT_ID ./infra/deploy-firebase.sh   # SITE_ID defaults to skillcoach-aibc
+```
+
+The script uses the Firebase Hosting REST API with your gcloud login (no
+Node.js or `firebase-tools` needed): it creates the site if missing, releases
+a version with the Cloud Run rewrite, and adds
+`https://skillcoach-aibc.web.app` and `https://skillcoach-aibc.firebaseapp.com`
+to the API's `CORS_ORIGINS`. `firebase deploy --only hosting` with
+`firebase.json` is equivalent.
+
+### 7.4 Lock down CORS
 
 ```bash
 gcloud run services update skillcoach-api --region $REGION \
-  --update-env-vars "CORS_ORIGINS=$WEB_URL"
+  --update-env-vars "^@^CORS_ORIGINS=$WEB_URL,https://skillcoach-aibc.web.app,https://skillcoach-aibc.firebaseapp.com"
 ```
 
-(Use `^@^` delimiter syntax if you need several comma-separated origins:
-`--update-env-vars "^@^CORS_ORIGINS=$WEB_URL,http://localhost:3000"`.)
+(The `^@^` delimiter syntax is needed because the value holds several
+comma-separated origins. `infra/deploy-web.sh` takes the extra origins as
+`EXTRA_ORIGINS`.)
 
-### 7.4 Seed demo data
+### 7.5 Seed demo data
 
 ```bash
 curl -s -X POST $API_URL/api/kb/documents -F file=@backend/app/seed/data/docs/acme-analytics-product-sheet.md
 # or run the seed module locally against the same Firestore with ADC
 # (documents, personas and scenarios; add --force to re-ingest):
 cd backend && GOOGLE_CLOUD_PROJECT=$PROJECT_ID GOOGLE_CLOUD_LOCATION=global \
-  GEMINI_EMBED_LOCATION=asia-east1 STORE_BACKEND=firestore python -m app.seed
+  GEMINI_EMBED_LOCATION=asia-east1 STORE_BACKEND=firestore \
+  FIRESTORE_DATABASE=$FIRESTORE_DATABASE python -m app.seed
 ```
 
-### 7.5 Demo-day settings
+### 7.6 Demo-day settings
 
 ```bash
 # Before recording / judging: no cold starts
@@ -317,12 +366,12 @@ we set on Cloud Run; it may differ from the code default.
 | `GEMINI_EMBED_MODEL` | api | `gemini-embedding-001` | `gemini-embedding-001` | 768 dims; changing it requires re-ingest |
 | `EMBED_DIMENSIONS` | api | `768` | `768` | Embedding output size; must match the Firestore vector index (section 3) |
 | `STORE_BACKEND` | api | `memory` | `firestore` | `memory` loses data on restart |
-| `FIRESTORE_DATABASE` | api | `(default)` | `(default)` | Firestore database id |
+| `FIRESTORE_DATABASE` | api | `(default)` | `skillcoach` | Firestore database id; a named database lets SkillCoach share a project with other apps |
 | `LLM_FAKE` | api | `false` | `false` (never `true` in production) | Dev/tests: canned LLM output and hash embeddings, no Google Cloud calls |
-| `CORS_ORIGINS` | api | `*` | web URL | |
+| `CORS_ORIGINS` | api | `*` | web URL + Firebase Hosting origins | Set by `deploy-web.sh` (`EXTRA_ORIGINS`) and `deploy-firebase.sh` |
 | `NEXT_PUBLIC_API_URL` | web (build time) | `http://localhost:8080` | API URL | Docker build argument (section 7.2) |
 | `NEXT_PUBLIC_MOCK` | web (build time) | `false` | `false` | `true` = local fixtures and a simulated SSE stream; Docker build argument |
-| `GOOGLE_APPLICATION_CREDENTIALS` | api (local only) | - | unset | Windows local dev only; Cloud Run uses its service account. Never copy the file into the repo |
+| `GOOGLE_APPLICATION_CREDENTIALS` | api (local only) | - | unset | Local dev only (or use `gcloud auth application-default login`); Cloud Run uses its service account. Never copy the file into the repo |
 
 Note on models: code defaults and deploy values are the same 3.x IDs,
 verified on 2026-10-15 to return 200 on `global` in this project.
@@ -377,7 +426,8 @@ gcloud secrets delete gemini-api-key --quiet
 gcloud artifacts repositories delete cloud-run-source-deploy --location $REGION --quiet
 gcloud iam service-accounts delete $API_SA --quiet
 gcloud iam service-accounts delete $WEB_SA --quiet
-gcloud firestore databases delete --database="(default)"
+gcloud firestore databases delete --database=$FIRESTORE_DATABASE
+# Firebase Hosting: disable the site in the Firebase console (Hosting > skillcoach-aibc)
 # or everything at once:
 # gcloud projects delete $PROJECT_ID
 ```
@@ -394,7 +444,7 @@ Keep everything running until judging is over; the submission links must stay li
 | SSE arrives in one batch | Buffering | `X-Accel-Buffering: no`, flush an initial comment, no gzip on the stream route |
 | `FAILED_PRECONDITION` on `find_nearest` | Vector index missing or building | `gcloud firestore indexes composite list`; use `STORE_BACKEND=memory` meanwhile |
 | Vector dimension error | Embedding size differs from index (768) | Check `output_dimensionality` in `embed()`; re-ingest |
-| Browser CORS error | `CORS_ORIGINS` missing the web URL | Update env var (section 7.3) |
+| Browser CORS error | `CORS_ORIGINS` missing the web URL | Update env var (section 7.4; Firebase Hosting origins: section 7.3) |
 | Frontend calls `localhost:8080` in production | `NEXT_PUBLIC_API_URL` build argument not passed | Rebuild with `--build-arg NEXT_PUBLIC_API_URL=$API_URL` (section 7.2) and redeploy |
 | Container fails health check | Not listening on `$PORT` / `0.0.0.0` | Check CMD; `gcloud run services logs read skillcoach-api --region $REGION` |
 | Data disappears between requests | `STORE_BACKEND=memory` with several instances | Use `firestore`, or `--max-instances 1` |

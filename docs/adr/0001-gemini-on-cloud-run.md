@@ -23,8 +23,8 @@ The old design had seven agents, a hybrid retriever with a reranker, a
 dedicated vector database, a worker queue and a three-tier client inference
 chain. That is weeks of work and most of it is plumbing that judges cannot see.
 
-Model availability also matters. On 2026-10-15 we tested the project
-(`project-6d34f8a9-8150-4e6a-ae7`) on Vertex AI: `gemini-3.8-flash`,
+Model availability also matters. On 2026-10-15 we tested our project on
+Vertex AI: `gemini-3.8-flash`,
 `gemini-3.5-flash-lite` and `gemini-3.1-pro-preview` (and later
 `gemini-4-argon`) return 200 only on
 `location=global` (404 on `us-central1`); `gemini-2.5-flash` and
@@ -71,7 +71,12 @@ work, so 2.5 is kept as a fallback only.
    (`frontend/`, service `skillcoach-web`), built with Cloud Build so that
    `NEXT_PUBLIC_API_URL` can be passed as a build argument, then deployed
    with `gcloud run deploy --image` (see [deployment](../deployment.md)).
-4. **Data in Firestore (Native mode, `asia-east1`)** behind a small store interface
+   Firebase Hosting (site `skillcoach-aibc`, `firebase.json`) serves the
+   public URL https://skillcoach-aibc.web.app and rewrites every path to
+   this service, so the page rendering stays on Cloud Run.
+4. **Data in Firestore (Native mode, `asia-east1`)**, in a named database
+   (`FIRESTORE_DATABASE=skillcoach`) so SkillCoach can share a project with
+   other apps, behind a small store interface
    (`STORE_BACKEND=memory|firestore`): application data and RAG chunks,
    using Firestore's built-in vector search (flat index, cosine). The
    in-memory backend implements the same interface for local dev, tests

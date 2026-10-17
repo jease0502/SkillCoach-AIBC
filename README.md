@@ -6,11 +6,12 @@
 
 > Google Cloud AI Builder Cup 2026 entry, theme: *Future of Work & Enterprise Productivity*
 
-- **Live demo:** https://skillcoach-web-817759648389.asia-east1.run.app
+- **Live demo:** https://skillcoach-aibc.web.app (Firebase Hosting in front of the Cloud Run web service; direct Cloud Run URL: https://skillcoach-web-506140624406.asia-east1.run.app)
 - **Source code:** https://github.com/jease0502/SkillCoach-AIBC
-- **API:** https://skillcoach-api-817759648389.asia-east1.run.app (public, for example `GET /api/scenarios`)
-- **Demo video (< 3 min):** `TODO: https://youtu.be/<id>`
-- **Pitch deck (PDF):** `TODO: docs/SkillCoach-deck.pdf` (content: [docs/DECK.md](docs/DECK.md))
+- **API:** https://skillcoach-api-506140624406.asia-east1.run.app (public, for example `GET /api/scenarios`)
+- **Demo video (3 to 4 min):** `TODO: https://youtu.be/<id>`
+- **Pitch deck (official AI Builder Cup template):** [media/SkillCoach_Submission.pdf](media/SkillCoach_Submission.pdf) ([.pptx](media/SkillCoach_Submission.pptx); content: [docs/DECK.md](docs/DECK.md))
+- **Brief description (submission form):** [docs/SUBMISSION_BRIEF.md](docs/SUBMISSION_BRIEF.md)
 
 ---
 
@@ -62,7 +63,7 @@ SkillCoach lets an employee practice a realistic conversation, by text or voice,
 | Manager dashboard: aggregates plus session summaries (no transcripts) and a "Ready to go live" count | Core (basic) |
 | Browser voice (Web Speech API): speech-to-text input and spoken customer replies; text mode always available | Shipped |
 | Native voice via Gemini Live API (low-latency, interruptible) | Planned |
-| 3D VRM avatar (three-vrm) with lip sync | Planned |
+| 3D customer avatar on the practice screen (three.js + three-vrm, VRM 1.0): idle breathing, blinking, eye contact, lip sync while the reply streams or is spoken, facial mood driven by the trust and patience meters; initials fallback without WebGL | Shipped |
 | On-device facial emotion cues (MediaPipe, browser only, no video leaves the device) | Planned |
 
 "Planned" items are not part of the judged build unless shown in the demo video.
@@ -93,15 +94,17 @@ Guardrails, enforced in code rather than trusted to the model:
 ## Architecture
 
 ```
-Browser (Next.js)  ──HTTPS──>  FastAPI on Cloud Run  ──>  Vertex AI: Gemini 4 Argon / 3.5 Flash-Lite (global), Embeddings (asia-east1)
-   text / voice                    Orchestrator                │
+Firebase Hosting (skillcoach-aibc.web.app) ──rewrite──> Next.js web on Cloud Run (serves the pages)
+   │
+Browser  ──HTTPS (REST + SSE)──>  FastAPI on Cloud Run  ──>  Vertex AI: Gemini 4 Argon / 3.5 Flash-Lite (global), Embeddings (asia-east1)
+   text / voice, 3D avatar         Orchestrator                │
    report, dashboard               ├─ compliance pre-check     │
                                    ├─ customer persona (RAG) ──┤
                                    ├─ compliance post-check (grounding)
                                    ├─ coach                    │
                                    └─ scorer (session end)     │
                                           │
-                                   Firestore (asia-east1: sessions, knowledge chunks + vectors)
+                                   Firestore (asia-east1, database `skillcoach`: sessions, knowledge chunks + vectors)
                                    (in-memory fallback for local dev)
 ```
 
@@ -127,6 +130,7 @@ GEMINI_LITE_MODEL=gemini-3.5-flash-lite
 GEMINI_PRO_MODEL=gemini-4-argon
 GEMINI_EMBED_MODEL=gemini-embedding-001
 STORE_BACKEND=memory
+# FIRESTORE_DATABASE=skillcoach     # only with STORE_BACKEND=firestore; default "(default)"
 CORS_ORIGINS=*
 ENV
 python -m venv .venv && source .venv/bin/activate
@@ -141,33 +145,36 @@ npm install
 npm run dev
 ```
 
-To use an AI Studio key instead of Vertex AI, set `GOOGLE_GENAI_USE_VERTEXAI=false` and `GEMINI_API_KEY`. For offline work, `LLM_FAKE=true` (backend: canned LLM output and hash embeddings) and `NEXT_PUBLIC_MOCK=true` (frontend: local fixtures and a simulated SSE stream) need no Google Cloud access. On Windows, `GOOGLE_APPLICATION_CREDENTIALS` may point to an ADC file outside the repository; never copy credentials into the repo.
+To use an AI Studio key instead of Vertex AI, set `GOOGLE_GENAI_USE_VERTEXAI=false` and `GEMINI_API_KEY`. For offline work, `LLM_FAKE=true` (backend: canned LLM output and hash embeddings) and `NEXT_PUBLIC_MOCK=true` (frontend: local fixtures and a simulated SSE stream) need no Google Cloud access. For credentials, run `gcloud auth application-default login` or set `GOOGLE_APPLICATION_CREDENTIALS` to an ADC file outside the repository; never copy credentials into the repo.
 
 Open http://localhost:3000, choose a demo scenario, and start practicing. Demo knowledge and scenarios are loaded at startup; see [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) for lines that reliably trigger each behavior.
 
-## Deploy to Cloud Run
+## Deploy to Cloud Run and Firebase Hosting
 
-Cloud Run, Firestore and embeddings run in `asia-east1`; Gemini generation is called on the Vertex AI `global` endpoint.
+Cloud Run, Firestore and embeddings run in `asia-east1`; Gemini generation is called on the Vertex AI `global` endpoint. Firebase Hosting (site `skillcoach-aibc`, config in [firebase.json](firebase.json)) serves the public URL and rewrites every path to the Cloud Run web service. The scripts require `PROJECT_ID` (there is no default) and run in this order:
 
 ```bash
-gcloud run deploy skillcoach-api --source backend --region asia-east1 --allow-unauthenticated \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=<project-id>,GOOGLE_CLOUD_LOCATION=global,GEMINI_EMBED_LOCATION=asia-east1,STORE_BACKEND=firestore"
+PROJECT_ID=<project-id> FIRESTORE_DATABASE=skillcoach ./infra/gcp-setup.sh   # one-time: APIs, service accounts, Firestore
+PROJECT_ID=<project-id> FIRESTORE_DATABASE=skillcoach ./infra/deploy.sh      # API service
+PROJECT_ID=<project-id> EXTRA_ORIGINS=https://skillcoach-aibc.web.app,https://skillcoach-aibc.firebaseapp.com \
+  ./infra/deploy-web.sh                                                       # web service
+PROJECT_ID=<project-id> ./infra/deploy-firebase.sh                            # Firebase Hosting
 ```
 
-`backend/Dockerfile` (Python 3.12, listens on `$PORT`) is built by `--source`. The web service needs the API URL at build time (`NEXT_PUBLIC_API_URL` is a build argument in `frontend/Dockerfile`), so follow section 7.2 of [docs/deployment.md](docs/deployment.md) and [frontend/README.md](frontend/README.md). One-time GCP setup and the API deploy are scripted in [infra/gcp-setup.sh](infra/gcp-setup.sh) and [infra/deploy.sh](infra/deploy.sh). Service accounts, the full environment variable list, Firestore setup and Secret Manager usage are documented there too; deployment.md is authoritative.
+`backend/Dockerfile` (Python 3.12, listens on `$PORT`) is built from source. The web service needs the API URL at build time (`NEXT_PUBLIC_API_URL` is a build argument in `frontend/Dockerfile`); see section 7.2 of [docs/deployment.md](docs/deployment.md) and [frontend/README.md](frontend/README.md). [infra/deploy-firebase.sh](infra/deploy-firebase.sh) uses the Firebase Hosting REST API with your gcloud login and adds the `web.app` / `firebaseapp.com` origins to the API's CORS list. Service accounts, the full environment variable list, Firestore setup and Secret Manager usage are documented in deployment.md, which is authoritative.
 
 ## Tech Stack
 
-- **Frontend:** Next.js (React, TypeScript), Tailwind CSS, browser Web Speech API (speech-to-text and `speechSynthesis`); planned: Gemini Live API voice, three-vrm, MediaPipe Face Landmarker
+- **Frontend:** Next.js (React, TypeScript), Tailwind CSS, browser Web Speech API (speech-to-text and `speechSynthesis`), three.js + `@pixiv/three-vrm` (3D customer avatar); planned: Gemini Live API voice, MediaPipe Face Landmarker
 - **Backend:** Python, FastAPI, Pydantic
 - **AI:** seven Gemini agent roles on `gemini-4-argon` (persona, builder, report) and `gemini-3.5-flash-lite` (precheck, grounding, state, coach), with automatic fallback chains to `gemini-3.8-flash`, `gemini-3.1-pro-preview` and `gemini-2.5-pro`, `gemini-embedding-001` (768 dims), via the `google-genai` SDK on Vertex AI; planned: Gemini Live API
-- **Data:** Firestore in `asia-east1` (sessions, knowledge chunks, vectors); in-memory store for local development
-- **Cloud:** Cloud Run, Artifact Registry, Cloud Build, Secret Manager, Cloud Logging
+- **Data:** Firestore in `asia-east1`, named database `skillcoach` (sessions, knowledge chunks, vectors); in-memory store for local development
+- **Cloud:** Cloud Run, Firebase Hosting, Artifact Registry, Cloud Build, Secret Manager, Cloud Logging
 
 ## Roadmap
 
-- **Hackathon build:** text role-play, persona generation with approval, multi-agent pipeline, RAG with citations, evidence-verified report with a compliance gate, basic manager view. See [docs/scope-3day.md](docs/scope-3day.md).
-- **Next:** Gemini Live API voice with barge-in; VRM avatar; on-device emotion cues feeding the coach.
+- **Hackathon build:** text role-play, persona generation with approval, multi-agent pipeline, RAG with citations, evidence-verified report with a compliance gate, basic manager view, browser voice, 3D customer avatar. See [docs/scope-3day.md](docs/scope-3day.md).
+- **Next:** Gemini Live API voice with barge-in; on-device emotion cues feeding the coach.
 - **Later:** SSO and multi-tenant workspaces; LMS / CRM integrations (export scores, pull real call topics); scenario generation from real (anonymized) call transcripts; multilingual practice for JAPAC markets; certification tracks with pass thresholds.
 
 ## Team
@@ -181,8 +188,19 @@ gcloud run deploy skillcoach-api --source backend --region asia-east1 --allow-un
 
 - [docs/HACKATHON.md](docs/HACKATHON.md): judging-criteria mapping, video storyboard, deck outline
 - [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md): demo scenario cards
+- [docs/SUBMISSION_BRIEF.md](docs/SUBMISSION_BRIEF.md): brief description for the submission form (how we use Firebase, Firestore, Cloud Run and Gemini)
 - [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md): pre-submission checklist
+
+## Third-party assets and licences
+
+| Component | Used for | Licence |
+| --- | --- | --- |
+| [Microsoft Rocketbox](https://github.com/microsoft/Microsoft-Rocketbox) | 7 customer avatar characters, exported to VRM and slimmed to 3-5 MB each by [tools/avatars/slim_vrm.py](tools/avatars/slim_vrm.py); files in `frontend/public/avatars/` | MIT |
+| [three.js](https://github.com/mrdoob/three.js) | WebGL rendering of the customer avatar | MIT |
+| [@pixiv/three-vrm](https://github.com/pixiv/three-vrm) | VRM 1.0 loading, expressions, look-at and lip sync | MIT |
+
+Attribution details: [NOTICE](NOTICE).
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
+Apache License 2.0 for the project's own code. See [LICENSE](LICENSE). Third-party components keep their own licences (above).

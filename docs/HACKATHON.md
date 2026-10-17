@@ -52,7 +52,8 @@ This document maps SkillCoach to the judging criteria, and contains the demo vid
 | Novel combination | Personas generated from your own documents (with citations and human approval) + a Compliance Guard that intercepts a risky message before it is sent + live coach + evidence-verified scoring with a compliance gate, in one loop. |
 | Trustworthy AI feedback | "Every score quotes your words" is the differentiator. Show a score card with the verified quote highlighted in the transcript. No verified evidence, no score above 50. |
 | Knowledge as practice | Turning static policy documents into adversarial, grounded practice scenarios. |
-| Stretch (only if built) | Voice via Gemini Live API; VRM avatar; on-device emotion cues. Do not claim unless shown. |
+| Embodied customer (shipped) | A 3D VRM customer avatar on the practice screen: lip sync while the reply streams or is spoken, facial mood driven by the trust and patience meters. |
+| Stretch (only if built) | Voice via Gemini Live API; on-device emotion cues. Do not claim unless shown. |
 
 ### User Experience & Solution Design (10%)
 
@@ -65,20 +66,22 @@ This document maps SkillCoach to the judging criteria, and contains the demo vid
 
 ---
 
-## 3. Demo video storyboard (target 2:50, hard limit < 3:00)
+## 3. Demo video storyboard (rules: 3 to 4 minutes)
 
-Record at 1080p. Use the live Cloud Run URL, not localhost. Scenario lines come from [DEMO_SCRIPT.md](DEMO_SCRIPT.md).
+The AI Builder Cup rules require a 3 to 4 minute video (`tools/video/compose.mjs` warns outside 3:00.5-3:59.5). The timings below are from the earlier 2:50 cut; the video is being re-recorded to fit the 3 to 4 minute window, so stretch the shots accordingly (for example, show the 3D customer avatar reacting during Scenario A).
+
+Record at 1080p. Use the live URL (https://skillcoach-aibc.web.app), not localhost. Scenario lines come from [DEMO_SCRIPT.md](DEMO_SCRIPT.md).
 
 | Time | Shot | Voiceover |
 | --- | --- | --- |
 | 0:00 to 0:15 | Title card: SkillCoach logo, tagline. Then a quick montage: a manager shadowing a new hire, a stack of PDFs. | "New customer-facing hires learn on real customers. Role-play would help, but it needs senior staff nobody can spare. And one wrong promise can cost a company dearly." |
-| 0:15 to 0:30 | Landing page on the Cloud Run URL. | "SkillCoach turns your company's own knowledge into realistic practice conversations, powered by Gemini on Google Cloud." |
+| 0:15 to 0:30 | Landing page on the live URL. | "SkillCoach turns your company's own knowledge into realistic practice conversations, powered by Gemini on Google Cloud." |
 | 0:30 to 0:45 | Admin uploads a product sheet and a code of conduct; chunk count appears. Persona generated from the docs shows citation chips; admin clicks **Approve**. | "An admin uploads product manuals and policies. Gemini drafts realistic customers from them, citing the source, and a human approves each one before anyone practices." |
 | 0:45 to 1:25 | Scenario A (SaaS pricing objection). Trainee types discovery question; AI CFO pushes back on price; coach hint appears; citation chip appears on the persona's reply. | "The customer is played by Gemini. It has hidden concerns, raises real objections, and only quotes facts from the company's documents. You can see the citation. Meanwhile the coach suggests the next move." |
 | 1:25 to 1:55 | **Signature moment.** Scenario B (insurance). Trainee types "guarantees you 8% a year" and presses Send. The message is held back; the **Compliance Guard card** shows rule CC-01, the quoted phrase, and two buttons: **Edit message** / **Send anyway**. Trainee clicks **Send anyway** (for training); the flag is recorded on the turn. | "Here's the costly mistake: promising a guaranteed return. Before the message ever reaches the customer, the Compliance Guard stops it, quotes the exact words and names the rule. The trainee can fix it, or send it anyway and live with the consequences." |
 | 1:55 to 2:20 | End session; report screen shows **Compliance: failed** and an overall score capped at 59. Click a score; transcript scrolls to the highlighted, verified trainee quote; knowledge citation shown. | "One forbidden promise fails the session, however good the rest was. And every score quotes the trainee's own words, verified against the transcript. No evidence, no high score." |
 | 2:20 to 2:35 | Manager dashboard: aggregate scores by skill, top violated rules, session summaries (no transcripts), and the "Ready to go live" count. | "Managers see aggregates and summaries, not transcripts: where the team needs help, and how many sessions are ready to go live." |
-| 2:35 to 2:45 | Architecture slide: Next.js, Cloud Run, seven Gemini agent roles, Firestore. | "Gemini agents on every turn, served from Cloud Run, grounded in your knowledge." |
+| 2:35 to 2:45 | Architecture slide: Firebase Hosting, Next.js, Cloud Run, seven Gemini agent roles, Firestore. | "Gemini agents on every turn, served from Cloud Run, grounded in your knowledge." |
 | 2:45 to 2:50 | End card: live URL, GitHub URL, team names. | "SkillCoach. Practice the conversation before it counts." |
 
 Recording tips: pre-warm the Cloud Run service (one request before recording) to avoid cold start; zoom browser to 125% for legibility; turn on captions in the editor; keep the cursor visible.
@@ -88,6 +91,8 @@ Recording tips: pre-warm the Cloud Run service (one request before recording) to
 ## 4. PDF deck outline (12 slides)
 
 Final slide content, with measured numbers and sources: [DECK.md](DECK.md).
+
+Participants must submit the pitch deck using the provided template: the submitted deck is [media/SkillCoach_Submission.pdf](../media/SkillCoach_Submission.pdf) ([.pptx](../media/SkillCoach_Submission.pptx)), built by `tools/deck/build_submission_deck.py` from `Submission Template _ AI Builder Cup.pptx`. The older `media/SkillCoach_Deck.pptx/.pdf` is superseded.
 
 Export to PDF, English only. Keep each slide to one message.
 
@@ -100,7 +105,7 @@ Export to PDF, English only. Keep each slide to one message.
    - Compliance risk. `[STAT: example fine or mis-selling penalty, source]`
 4. **Solution.** Upload knowledge, generate and approve personas, pick a scenario, practice with an AI customer, get real-time compliance and coaching, receive an evidence-based report with a compliance gate. One diagram of the user flow.
 5. **Demo.** Four screenshots: persona draft with citations and the Approve button; the Compliance Guard card ("Edit message" / "Send anyway"); grounded persona reply with citation; report with verified quoted evidence and "Compliance: failed". QR code / link to live URL and video.
-6. **Architecture.** Next.js and FastAPI on Cloud Run (`asia-east1`), Vertex AI Gemini (`gemini-4-argon`, `gemini-3.5-flash-lite` on the `global` endpoint, with fallback chains), `gemini-embedding-001` and Firestore (`asia-east1`). Per-turn pipeline diagram.
+6. **Architecture.** Firebase Hosting in front of Next.js and FastAPI on Cloud Run (`asia-east1`), Vertex AI Gemini (`gemini-4-argon`, `gemini-3.5-flash-lite` on the `global` endpoint, with fallback chains), `gemini-embedding-001` and Firestore (`asia-east1`). Per-turn pipeline diagram.
 7. **How Gemini is used.** Table of the seven Gemini agent roles and retrieval: role, model, structured output, guardrail. Highlight evidence verification (quotes must exist in transcript, otherwise unverified and capped at 50; citations must exist in KB) and the compliance gate (high-severity violation fails, score capped at 59).
 8. **Community benefit & impact.**
    - Trainees: confidence and faster ramp-up; safe space to fail.
@@ -114,7 +119,7 @@ Export to PDF, English only. Keep each slide to one message.
     - Business: per-seat SaaS for teams; enterprise tier with SSO, region pinning for data at rest, LMS/CRM integration; scenario marketplace by industry.
     - Go-to-market: English-speaking APAC financial services first (Singapore insurance and bancassurance advisors under MAS fair-dealing rules), then Philippine and Hong Kong contact-center and advisor workforces; Taiwan, Japan and Korea as the expansion wave after localization ("English first, built to localize").
     - Cross-industry: sales, insurance, banking, support, retail, healthcare front desk.
-11. **Roadmap.** Now: text practice, persona generation with approval, multi-agent pipeline, evidence-verified report with compliance gate, manager view. Next: Gemini Live API voice, VRM avatar, on-device emotion cues. Later: LMS/CRM integrations, scenarios from anonymized real calls, certification tracks.
+11. **Roadmap.** Now: text practice, browser voice, 3D customer avatar, persona generation with approval, multi-agent pipeline, evidence-verified report with compliance gate, manager view. Next: Gemini Live API voice, on-device emotion cues. Later: LMS/CRM integrations, scenarios from anonymized real calls, certification tracks.
 12. **Team.** Names, roles, one-line background each. Links: live demo, video, GitHub.
 
 ---

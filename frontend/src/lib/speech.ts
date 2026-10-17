@@ -86,6 +86,18 @@ export function speechSynthesisSupported(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window;
 }
 
+/** Speech activity for the 3D avatar's lip-sync. */
+export type SpeechActivity = 'start' | 'word' | 'end';
+const speechListeners = new Set<(a: SpeechActivity) => void>();
+const emitSpeech = (a: SpeechActivity) => speechListeners.forEach((fn) => fn(a));
+
+export function onSpeechActivity(fn: (a: SpeechActivity) => void): () => void {
+  speechListeners.add(fn);
+  return () => {
+    speechListeners.delete(fn);
+  };
+}
+
 /** Speak text with the best available voice for the locale. */
 export function speak(text: string, lang = 'en-US') {
   if (!speechSynthesisSupported()) return;
@@ -96,9 +108,17 @@ export function speak(text: string, lang = 'en-US') {
   const voice = synth.getVoices().find((v) => v.lang === lang) ?? synth.getVoices().find((v) => v.lang.startsWith(lang.split('-')[0]));
   if (voice) utter.voice = voice;
   utter.rate = 1.02;
+  utter.onstart = () => emitSpeech('start');
+  utter.onboundary = (e) => {
+    if (e.name === 'word') emitSpeech('word');
+  };
+  utter.onend = () => emitSpeech('end');
+  utter.onerror = () => emitSpeech('end');
   synth.speak(utter);
 }
 
 export function stopSpeaking() {
-  if (speechSynthesisSupported()) window.speechSynthesis.cancel();
+  if (!speechSynthesisSupported()) return;
+  window.speechSynthesis.cancel();
+  emitSpeech('end');
 }

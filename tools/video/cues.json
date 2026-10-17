@@ -28,8 +28,12 @@
       "text": "A trainer checks the sources and approves. Only approved customers are used for practice."
     },
     {
+      "id": "c06b_scenario",
+      "text": "Scenarios are built the same way. The goal, the compliance rules and the scoring rubric each point to a source, so a trainer can check every rule before it is used."
+    },
+    {
       "id": "c07_open",
-      "text": "Now a new insurance advisor meets Mr. Tan, a cautious retiree. His first question is a trap."
+      "text": "Now a new insurance advisor meets Mr. Tan, a cautious retiree, as a 3D customer who reacts to every answer. His first question is a trap."
     },
     {
       "id": "c08_guard",
@@ -64,13 +68,22 @@
       "text": "Every score quotes the trainee's own words, verified against the transcript. No evidence, no high score."
     },
     {
+      "id": "c15b_violations",
+      "text": "Each violation names the rule and jumps to the exact turn. Strengths and next steps turn the grade into a coaching plan."
+    },
+    {
       "id": "c16_dashboard",
       "text": "Managers see aggregates, never transcripts: skill gaps, broken rules, and who is ready to go live. Sample team data is labeled."
     },
     {
       "id": "c17_arch",
       "card": "arch",
-      "text": "Seven Gemini agent roles: Gemini 4 Argon for the customer, builder and report, Flash-Lite for the fast checks. The future of work: a tireless practice partner for every new hire."
+      "text": "Under the hood, it's all Google Cloud. Firebase Hosting serves the app, and the web and API run on Cloud Run. Firestore stores documents, personas, sessions and reports. Seven Gemini agent roles run on Vertex AI: Gemini 4 Argon for the customer, builder and report, Flash-Lite for the fast checks."
+    },
+    {
+      "id": "c17b_future",
+      "card": "arch",
+      "text": "The future of work: a tireless practice partner for every new hire, built from the company's own knowledge."
     },
     {
       "id": "c18_end",

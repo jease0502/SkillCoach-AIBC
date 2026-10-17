@@ -456,7 +456,7 @@ At session time OCEAN values are rendered as adjectives, not numbers, which mode
 
 Portrait generation uses Imagen through the same SDK (`client.models.generate_images`, model from `settings.imagen_model`), only when the trainer clicks "Generate portrait". The prompt is built by the server from coarse demographics only (age band, gender, occupation, setting) plus a fixed style suffix: `stylized digital illustration, head and shoulders, neutral background, not photorealistic`. A stylized look avoids the uncanny valley and lowers the risk of resembling a real person. The name is never included in the image prompt. The image is stored in Cloud Storage and referenced by `image_uri`.
 
-VRM presets are a static catalog (3 to 6 models) used only if the avatar stretch goal is built; otherwise the UI shows the portrait or initials.
+VRM avatars are shipped as a static catalog of 7 models (`frontend/public/avatars/`, Microsoft Rocketbox, MIT). In the current build the seed personas store a preset name as a string (`"avatar": "preset-executive"`, `preset-retiree`, `preset-casual`), and other personas get a model by age and the pronouns in their text (`frontend/src/lib/avatar.ts`); the object form above is the target schema. Without WebGL the UI shows the initials.
 
 ### 5.7 Error handling
 
