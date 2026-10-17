@@ -548,7 +548,7 @@ SNAPSHOT_PAGES = [
         ("practice_session", "Later in the session: trust has dropped, the coach suggests the next move, and every "
                              "customer reply cites the knowledge base."),
         ("report", "The report: one high-severity violation fails the compliance gate and caps the score "
-                   "(28 here), however good the rest was."),
+                   "(37 in this recorded session), however good the rest was."),
     ]),
     ("Snapshots of the prototype: evidence", [
         ("report_evidence", "Skills, with evidence: each score quotes the trainee's own words; select a quote to "
