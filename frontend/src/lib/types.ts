@@ -221,6 +221,7 @@ export interface SessionSummary {
   id: string;
   scenario_title: string;
   persona_name: string;
+  trainee_name?: string | null;
   overall_score: number | null;
   compliance_passed?: boolean | null;
   started_at: ISODate;

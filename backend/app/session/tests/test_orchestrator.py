@@ -548,6 +548,14 @@ def test_http_session_flow_and_dashboard(llm):
     assert client.post(f"/api/sessions/{s['id']}/turns", json={"text": "  "}).status_code == 422
     pc = client.post(f"/api/sessions/{s['id']}/precheck", json={"text": "Can I guarantee it? No."})
     assert pc.status_code == 200 and "flags" in pc.json()
+    from app.auth import User, optional_user
+    app.dependency_overrides[optional_user] = lambda: User(uid="u1", name="Priya", email="p@example.com", guest=False)
+    mine = client.post("/api/sessions", json={"scenario_id": "s1"}).json()
+    assert mine["user_id"] == "u1" and mine["trainee_name"] == "Priya"
+    history = client.get("/api/me/sessions").json()
+    assert [h["id"] for h in history] == [mine["id"]] and history[0]["trainee_name"] == "Priya"
+    app.dependency_overrides.clear()
+    assert client.get("/api/me/sessions").status_code == 401
     dv = client.post(f"/api/sessions/{s['id']}/delivery", json={"image": PNG_1PX, "text": "Hi"})
     assert dv.status_code == 200 and dv.json()["eye_contact"] == "good"
 
@@ -557,9 +565,9 @@ def test_http_session_flow_and_dashboard(llm):
     assert client.post(f"/api/sessions/{s['id']}/turns", json={"text": "hi"}).status_code == 409
 
     d = client.get("/api/dashboard").json()
-    assert d["sessions_count"] == 1 and d["average_score"] == report["overall_score"]
+    assert d["sessions_count"] == 2 and d["average_score"] == report["overall_score"]  # + the signed-in one
     assert d["top_violations"][0]["rule_id"] == "no-guarantee"
-    assert d["recent_sessions"][0]["compliance_passed"] is False
+    assert next(r for r in d["recent_sessions"] if r["id"] == s["id"])["compliance_passed"] is False
     assert d["ready_count"] == 0  # failed compliance is never "ready"
     assert "turns" not in json.dumps(d)  # aggregates only, no transcripts
 

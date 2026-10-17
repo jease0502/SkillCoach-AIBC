@@ -246,6 +246,7 @@ async function run() {
   });
   const page = await context.newPage();
   page.setDefaultTimeout(30_000);
+  page.on('pageerror', (e) => console.log('pageerror:', e.message, (e.stack || '').split(/\n/).slice(0, 5).join(' | ')));
 
   await page.goto(`${SITE}/`, { waitUntil: 'networkidle' });
   await page.getByText('Start practicing in one click').waitFor();
@@ -409,6 +410,9 @@ async function run() {
     await scrollBy(page, 520, 2.2);
     await scrollBy(page, 520, 2.2);
     await rec.quiet(0.4);
+  } catch (err) {
+    await page.screenshot({ path: path.join(FRAMES_DIR, 'failure.png') }).catch(() => {});
+    throw err;
   } finally {
     await rec.stop();
     if (personaId) {

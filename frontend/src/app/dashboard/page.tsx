@@ -170,6 +170,9 @@ export default function DashboardPage() {
                     <th scope="col" className="px-5 py-2.5 font-medium">
                       Scenario
                     </th>
+                    <th scope="col" className="hidden px-3 py-2.5 font-medium lg:table-cell">
+                      Trainee
+                    </th>
                     <th scope="col" className="hidden px-3 py-2.5 font-medium md:table-cell">
                       Customer
                     </th>
@@ -197,6 +200,7 @@ export default function DashboardPage() {
                           )}
                         </span>
                       </td>
+                      <td className="hidden px-3 py-3 text-slate-600 lg:table-cell">{s.trainee_name ?? <span className="text-slate-400">Visitor</span>}</td>
                       <td className="hidden px-3 py-3 text-slate-600 md:table-cell">{s.persona_name}</td>
                       <td className="px-3 py-3">
                         {s.overall_score != null ? (

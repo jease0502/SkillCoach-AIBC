@@ -18,6 +18,7 @@ import {
 } from './fixtures';
 import type {
   DeliveryFeedback,
+  SessionSummary,
   CoachHint,
   ComplianceFlag,
   Dashboard,
@@ -572,6 +573,9 @@ export const mockApi = {
   async getSession(id: string): Promise<Session> {
     await sleep(150);
     return clone(db().sessions.find((x) => x.id === id) ?? notFound('Session'));
+  },
+  async mySessions(): Promise<SessionSummary[]> {
+    return [];
   },
   async delivery(_id: string, _image: string, _text: string, _cues?: unknown): Promise<DeliveryFeedback> {
     await sleep(600);

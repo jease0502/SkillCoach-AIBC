@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
-import { BarChart3, BookOpen, FlaskConical, Menu, MessagesSquare, UserRound, X } from 'lucide-react';
+import { BarChart3, BookOpen, FlaskConical, History, LogIn, LogOut, Menu, MessagesSquare, UserRound, X } from 'lucide-react';
 import { MOCK } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
 const nav = [
@@ -13,6 +14,44 @@ const nav = [
   { href: '/knowledge', label: 'Knowledge', Icon: BookOpen },
   { href: '/dashboard', label: 'Dashboard', Icon: BarChart3 },
 ];
+
+/** Sign-in link, or the signed-in trainee with links to their history and sign-out. */
+function AccountMenu() {
+  const { account, ready, signOut } = useAuth();
+  const pathname = usePathname();
+  if (MOCK || !ready) return null;
+  if (!account) {
+    return (
+      <Link
+        href={`/login?next=${encodeURIComponent(pathname || '/')}`}
+        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-brand-700 ring-1 ring-inset ring-brand-200 hover:bg-brand-50"
+      >
+        <LogIn className="h-4 w-4" aria-hidden /> Sign in
+      </Link>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1.5">
+      <Link
+        href="/me"
+        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+        title="My practice history"
+      >
+        <History className="h-4 w-4" aria-hidden />
+        <span className="max-w-[9rem] truncate">{account.guest ? 'Guest' : account.name}</span>
+      </Link>
+      <button
+        type="button"
+        onClick={() => void signOut()}
+        className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+        aria-label="Sign out"
+        title="Sign out"
+      >
+        <LogOut className="h-4 w-4" aria-hidden />
+      </button>
+    </div>
+  );
+}
 
 export function Logo() {
   return (
@@ -75,6 +114,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 Demo data
               </span>
             )}
+            <AccountMenu />
             <button
               type="button"
               className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 md:hidden"

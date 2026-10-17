@@ -118,7 +118,7 @@ def due_branch_events(scenario: Scenario, rec: SessionRecord, trainee_turns: int
 
 # ---------- Session lifecycle ----------
 
-async def create_session(scenario_id: str) -> Session:
+async def create_session(scenario_id: str, user_id: str | None = None, trainee_name: str | None = None) -> Session:
     store = deps.get_store()
     scenario_data = await store.get(SCENARIOS, scenario_id)
     if scenario_data is None:
@@ -131,6 +131,7 @@ async def create_session(scenario_id: str) -> Session:
 
     text = await agents.opening_line(persona, scenario)
     session = Session(id=new_id(), scenario_id=scenario.id, persona_id=persona.id,
+                      user_id=user_id, trainee_name=trainee_name,
                       trust=persona.initial_trust, patience=persona.initial_patience,
                       turns=[Turn(index=0, role="customer", text=text,
                                   trust=persona.initial_trust, patience=persona.initial_patience)])

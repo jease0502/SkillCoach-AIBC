@@ -77,6 +77,13 @@ gcloud run services update "$API_SERVICE" \
   --update-env-vars="^|^CORS_ORIGINS=${ORIGINS}" \
   --quiet
 
+# Firebase Hosting caches prerendered pages at the CDN (Next sends s-maxage); a new
+# Hosting release purges that cache, so pages never mix an old build with the new one.
+if [[ -n "${FIREBASE_SITE:-}" ]]; then
+  echo "==> New Firebase Hosting release (purges the CDN cache)"
+  SITE_ID="$FIREBASE_SITE" PROJECT_ID="$PROJECT_ID" REGION="$REGION" bash "$ROOT/infra/deploy-firebase.sh"
+fi
+
 echo "==> Done"
 echo "    Web: $WEB_URL"
 echo "    API: $API_URL (CORS_ORIGINS=$ORIGINS)"

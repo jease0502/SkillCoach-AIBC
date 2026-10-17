@@ -166,6 +166,8 @@ class Session(BaseModel):
     patience: int = 70
     started_at: datetime = Field(default_factory=now)
     ended_at: datetime | None = None
+    user_id: str | None = Field(None, description="Firebase Auth uid of the trainee; None for anonymous visitors")
+    trainee_name: str | None = None
 
 
 # ---------- Report ----------
@@ -214,6 +216,7 @@ class SessionSummary(BaseModel):
     id: str
     scenario_title: str
     persona_name: str
+    trainee_name: str | None = None
     overall_score: int | None
     compliance_passed: bool | None = None
     started_at: datetime

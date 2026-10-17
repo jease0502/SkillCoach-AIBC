@@ -1,8 +1,10 @@
 import { parseSSE } from './sse';
 import { mockApi } from './mock/engine';
 import type { CueSummary } from './face-vision';
+import { currentIdToken } from './auth';
 import type {
   DeliveryFeedback,
+  SessionSummary,
   ComplianceFlag,
   Dashboard,
   Document,
@@ -30,6 +32,12 @@ export class ApiError extends Error {
   }
 }
 
+/** Authorization header with the Firebase ID token, when someone is signed in. */
+async function authHeader(): Promise<Record<string, string>> {
+  const token = await currentIdToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const isForm = init.body instanceof FormData;
   let res: Response;
@@ -39,6 +47,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       headers: {
         Accept: 'application/json',
         ...(init.body && !isForm ? { 'Content-Type': 'application/json' } : {}),
+        ...(await authHeader()),
         ...init.headers,
       },
     });
@@ -102,6 +111,8 @@ const httpApi = {
   createSession: (scenario_id: string) => request<Session>('/api/sessions', json({ scenario_id })),
   listSessions: () => request<Session[]>('/api/sessions'),
   getSession: (id: string) => request<Session>(`/api/sessions/${id}`),
+  /** The signed-in trainee's practice history. */
+  mySessions: () => request<SessionSummary[]>('/api/me/sessions'),
   /** Fast compliance check before a message is sent, so high-risk messages can be held back. */
   precheck: (id: string, text: string, signal?: AbortSignal) =>
     request<{ flags: ComplianceFlag[] }>(`/api/sessions/${id}/precheck`, { ...json({ text }), signal }),
@@ -110,7 +121,7 @@ const httpApi = {
     try {
       res = await fetch(`${API_URL}/api/sessions/${id}/turns`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream', ...(await authHeader()) },
         body: JSON.stringify({ text }),
         signal,
       });

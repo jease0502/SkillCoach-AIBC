@@ -4,13 +4,14 @@ from __future__ import annotations
 import json
 from collections import Counter, defaultdict
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.schemas import (
     ComplianceFlag, Dashboard, DeliveryFeedback, DimensionAverage, Persona, Report, Scenario, Session, SessionSummary, ViolationCount,
 )
+from app.auth import User, optional_user
 from app.session import deps, orchestrator
 from app.session.orchestrator import PERSONAS, REPORTS, SCENARIOS, SESSIONS, SessionError
 
@@ -35,9 +36,10 @@ def _http(e: SessionError) -> HTTPException:
 
 
 @router.post("/sessions", response_model=Session)
-async def create_session(body: CreateSessionRequest) -> Session:
+async def create_session(body: CreateSessionRequest, user: User | None = Depends(optional_user)) -> Session:
     try:
-        return await orchestrator.create_session(body.scenario_id)
+        return await orchestrator.create_session(
+            body.scenario_id, user_id=user.uid if user else None, trainee_name=user.name if user else None)
     except SessionError as e:
         raise _http(e)
 
@@ -46,6 +48,36 @@ async def create_session(body: CreateSessionRequest) -> Session:
 async def list_sessions() -> list[Session]:
     rows = [Session.model_validate(r) for r in await deps.get_store().list(SESSIONS)]
     return sorted(rows, key=lambda s: s.started_at, reverse=True)
+
+
+@router.get("/me/sessions", response_model=list[SessionSummary])
+async def my_sessions(user: User | None = Depends(optional_user)) -> list[SessionSummary]:
+    """The signed-in trainee's own practice history, newest first."""
+    if user is None:
+        raise HTTPException(status_code=401, detail="Sign in to see your practice history")
+    store = deps.get_store()
+    mine = [Session.model_validate(r) for r in await store.list(SESSIONS) if r.get("user_id") == user.uid]
+    return await _summaries(sorted(mine, key=lambda s: s.started_at, reverse=True))
+
+
+async def _summaries(sessions: list[Session]) -> list[SessionSummary]:
+    store = deps.get_store()
+    ids = {s.id for s in sessions}
+    reports = {r["session_id"]: Report.model_validate(r) for r in await store.list(REPORTS) if r.get("session_id") in ids}
+    scenarios = {r["id"]: Scenario.model_validate(r) for r in await store.list(SCENARIOS)}
+    personas = {r["id"]: Persona.model_validate(r) for r in await store.list(PERSONAS)}
+    return [_summary(s, scenarios, personas, reports) for s in sessions]
+
+
+def _summary(s: Session, scenarios: dict, personas: dict, reports: dict) -> SessionSummary:
+    return SessionSummary(
+        id=s.id,
+        scenario_title=scenarios[s.scenario_id].title if s.scenario_id in scenarios else "(deleted scenario)",
+        persona_name=personas[s.persona_id].name if s.persona_id in personas else "(deleted persona)",
+        trainee_name=s.trainee_name,
+        overall_score=reports[s.id].overall_score if s.id in reports else None,
+        compliance_passed=reports[s.id].compliance_passed if s.id in reports else None,
+        started_at=s.started_at)
 
 
 @router.get("/sessions/{session_id}", response_model=Session)
@@ -155,13 +187,5 @@ async def dashboard() -> Dashboard:
         by_dimension=[DimensionAverage(name=n, average=round(sum(v) / len(v), 1)) for n, v in by_dim.items()],
         top_violations=[ViolationCount(rule_id=k, message=messages[k], count=c)
                         for k, c in violations.most_common(TOP_VIOLATIONS)],
-        recent_sessions=[
-            SessionSummary(
-                id=s.id,
-                scenario_title=scenarios[s.scenario_id].title if s.scenario_id in scenarios else "(deleted scenario)",
-                persona_name=personas[s.persona_id].name if s.persona_id in personas else "(deleted persona)",
-                overall_score=reports[s.id].overall_score if s.id in reports else None,
-                compliance_passed=reports[s.id].compliance_passed if s.id in reports else None,
-                started_at=s.started_at)
-            for s in recent],
+        recent_sessions=[_summary(s, scenarios, personas, reports) for s in recent],
     )
