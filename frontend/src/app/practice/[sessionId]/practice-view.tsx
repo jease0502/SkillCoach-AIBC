@@ -578,7 +578,8 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_320px]">
         {/* Customer on a video-call stage */}
-        <Card className="relative self-start overflow-hidden p-0 lg:sticky lg:top-20">
+        {/* Plain container, not a glass Card: Safari does not paint <video> under backdrop-filter. */}
+        <div className="relative self-start overflow-hidden rounded-xl border border-glass bg-slate-900 shadow-card lg:sticky lg:top-20">
           {videoAvatarBase(persona) ? (
             <VideoAvatar
               base={videoAvatarBase(persona)!}
@@ -631,7 +632,7 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
               </span>
             </>
           )}
-        </Card>
+        </div>
 
         {/* Conversation */}
         <Card className="flex h-[calc(100vh-12rem)] min-h-[480px] flex-col overflow-hidden">
