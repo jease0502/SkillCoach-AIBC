@@ -63,6 +63,7 @@ SkillCoach lets an employee practice a realistic conversation, by text or voice,
 | Manager dashboard: aggregates plus session summaries (no transcripts) and a "Ready to go live" count | Core (basic) |
 | Browser voice (Web Speech API): speech-to-text input and spoken customer replies; text mode always available | Shipped |
 | Native voice via Gemini Live API (low-latency, interruptible) | Planned |
+| Live call mode: the trainee's camera next to the 3D customer, hands-free voice turns (speak, the reply is spoken back, the mic reopens), and per-turn delivery feedback where Gemini 3.5 Flash-Lite reviews one camera frame for eye contact, expression and posture (frames are not stored; Chrome or Edge for voice) | Shipped |
 | 3D customer avatar on the practice screen (three.js + three-vrm, VRM 1.0): idle breathing, blinking, eye contact, lip sync while the reply streams or is spoken, facial mood driven by the trust and patience meters; initials fallback without WebGL | Shipped |
 | On-device facial emotion cues (MediaPipe, browser only, no video leaves the device) | Planned |
 

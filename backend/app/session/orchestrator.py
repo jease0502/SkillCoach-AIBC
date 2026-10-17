@@ -18,8 +18,10 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
-from app.schemas import BranchEvent, ComplianceFlag, Persona, Report, Scenario, SearchHit, Session, Turn, now
-from app.session import agents, deps
+from app.schemas import (
+    BranchEvent, ComplianceFlag, DeliveryFeedback, Persona, Report, Scenario, SearchHit, Session, Turn, now,
+)
+from app.session import agents, deps, prompts
 
 log = logging.getLogger(__name__)
 
@@ -365,6 +367,46 @@ async def _take_draft(session: Session) -> Report | None:
         raise
     except Exception:  # already logged by the callback; fall back to generating inline
         return None
+
+
+MAX_FRAME_BYTES = 1_500_000
+
+
+def _decode_frame(image: str) -> tuple[bytes, str]:
+    import base64
+    import binascii
+
+    mime = "image/jpeg"
+    if image.startswith("data:"):
+        header, _, image = image.partition(",")
+        mime = header[5:].split(";")[0] or mime
+    if mime not in ("image/jpeg", "image/png", "image/webp"):
+        raise SessionError(415, "Frame must be a JPEG, PNG or WebP image")
+    try:
+        data = base64.b64decode(image, validate=True)
+    except (binascii.Error, ValueError):
+        raise SessionError(422, "Frame is not valid base64")
+    if not data:
+        raise SessionError(422, "Frame is empty")
+    if len(data) > MAX_FRAME_BYTES:
+        raise SessionError(413, "Frame is too large; send a smaller JPEG")
+    return data, mime
+
+
+async def delivery_feedback(session_id: str, image: str, text: str = "") -> DeliveryFeedback:
+    """Live mode: non-verbal delivery feedback from one webcam frame. Nothing is stored."""
+    data, mime = _decode_frame(image)
+    rec = await load_record(session_id)
+    _scenario, persona = await load_context(rec.session)
+    prompt = (
+        f"Customer: {persona.name}, {persona.title}. Customer trust {rec.session.trust}/100, "
+        f"patience {rec.session.patience}/100.\n"
+        f"What the trainee said in this turn: {text.strip()[:600] or '(not given)'}"
+    )
+    return await deps.generate_json(
+        prompt, DeliveryFeedback, system=prompts.DELIVERY_SYSTEM, model=deps.lite_model(),
+        temperature=0.3, thinking="low", images=[(data, mime)],
+    )
 
 
 async def end_session(session_id: str) -> Report:

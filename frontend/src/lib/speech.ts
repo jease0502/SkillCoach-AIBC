@@ -67,8 +67,9 @@ export function useSpeechRecognition(lang: string, onText: (text: string, final:
       onTextRef.current((finalText + interim).trim(), interim === '');
     };
     rec.onerror = (e) => {
-      setError(e.error === 'not-allowed' ? 'Microphone access was blocked. Allow it in your browser settings.' : `Speech recognition error: ${e.error}`);
       setListening(false);
+      if (e.error === 'no-speech' || e.error === 'aborted') return; // nothing heard, or stopped on purpose
+      setError(e.error === 'not-allowed' ? 'Microphone access was blocked. Allow it in your browser settings.' : `Speech recognition error: ${e.error}`);
     };
     rec.onend = () => setListening(false);
     recRef.current = rec;

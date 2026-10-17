@@ -133,6 +133,17 @@ class CoachHint(BaseModel):
     citations: list[Citation] = Field(default_factory=list)
 
 
+class DeliveryFeedback(BaseModel):
+    """Live mode: how the trainee came across on camera in one turn (nothing is stored)."""
+    eye_contact: Literal["good", "partial", "poor", "unclear"] = Field(
+        description="Looking at the camera / customer, as far as one frame shows")
+    expression: str = Field(description="Facial expression in a few words, e.g. 'warm, relaxed smile'")
+    posture: str = Field(description="Posture and framing in a few words, e.g. 'upright, centred'")
+    fit: Literal["fits", "mixed", "clashes"] = Field(
+        description="Whether the expression fits what the trainee said and the customer's mood")
+    tip: str = Field(description="One short, kind, actionable tip about non-verbal delivery")
+
+
 class Turn(BaseModel):
     index: int
     role: Literal["trainee", "customer"]

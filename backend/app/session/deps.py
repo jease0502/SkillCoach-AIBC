@@ -53,10 +53,11 @@ def _thinking_kw(fn: Callable[..., Any], thinking: str | None) -> dict[str, Any]
 
 async def generate_json(prompt: str, schema: type[BaseModel], *, system: str | None = None,
                         model: str | None = None, temperature: float = 0.4,
-                        thinking: str | None = None) -> BaseModel:
+                        thinking: str | None = None, images: list[tuple[bytes, str]] | None = None) -> BaseModel:
     fn = _resolve("app.llm.gemini").generate_json
+    extra = {"images": images} if images else {}
     return await fn(prompt, schema, system=system, model=model, temperature=temperature,
-                    **_thinking_kw(fn, thinking))
+                    **_thinking_kw(fn, thinking), **extra)
 
 
 async def generate_text(prompt: str, *, system: str | None = None, model: str | None = None,

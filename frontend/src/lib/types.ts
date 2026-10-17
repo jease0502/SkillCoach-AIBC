@@ -137,6 +137,15 @@ export interface CoachHint {
   citations: Citation[];
 }
 
+/** Live mode: Gemini's read of one camera frame of the trainee (not stored). */
+export interface DeliveryFeedback {
+  eye_contact: 'good' | 'partial' | 'poor' | 'unclear';
+  expression: string;
+  posture: string;
+  fit: 'fits' | 'mixed' | 'clashes';
+  tip: string;
+}
+
 export type TurnRole = 'trainee' | 'customer';
 
 export interface Turn {

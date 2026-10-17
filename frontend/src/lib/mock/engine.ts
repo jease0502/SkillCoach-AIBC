@@ -17,6 +17,7 @@ import {
   violationMessages,
 } from './fixtures';
 import type {
+  DeliveryFeedback,
   CoachHint,
   ComplianceFlag,
   Dashboard,
@@ -571,6 +572,16 @@ export const mockApi = {
   async getSession(id: string): Promise<Session> {
     await sleep(150);
     return clone(db().sessions.find((x) => x.id === id) ?? notFound('Session'));
+  },
+  async delivery(_id: string, _image: string, _text: string): Promise<DeliveryFeedback> {
+    await sleep(600);
+    return {
+      eye_contact: 'good',
+      expression: 'calm, friendly',
+      posture: 'upright, centred',
+      fit: 'fits',
+      tip: 'Keep looking at the camera while you explain the risk.',
+    };
   },
   async precheck(id: string, text: string): Promise<{ flags: ComplianceFlag[] }> {
     await sleep(350);

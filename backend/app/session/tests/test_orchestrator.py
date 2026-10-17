@@ -37,9 +37,13 @@ class FakeLLM:
         self.stream_started = asyncio.Event()
         self.grounding_claims = 2
 
-    async def generate_json(self, prompt, schema, *, system=None, model=None, temperature=0.4, thinking=None):
+    async def generate_json(self, prompt, schema, *, system=None, model=None, temperature=0.4, thinking=None,
+                            images=None):
         name = schema.__name__
-        self.calls.append({"kind": name, "model": model, "thinking": thinking, "prompt": prompt})
+        self.calls.append({"kind": name, "model": model, "thinking": thinking, "prompt": prompt, "images": images})
+        if name == "DeliveryFeedback":
+            return schema(eye_contact="good", expression="calm, friendly", posture="upright, centred",
+                          fit="fits", tip="Keep looking at the camera while you explain the risk.")
         if name == "_ComplianceDraft":
             if self.fail_compliance:
                 raise RuntimeError("gemini down")
@@ -384,6 +388,43 @@ def test_precheck_times_out_to_keyword_flags(llm, monkeypatch):
     assert [f.quote for f in run(go())] == ["guarantee"]
 
 
+# ---------- Live mode: delivery feedback ----------
+
+PNG_1PX = ("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA"
+           "60e6kgAAAABJRU5ErkJggg==")
+
+
+def test_delivery_sends_the_frame_to_the_lite_model_and_stores_nothing(llm):
+    async def go():
+        await seed()
+        s = await orchestrator.create_session("s1")
+        fb = await orchestrator.delivery_feedback(s.id, f"data:image/png;base64,{PNG_1PX}", "Hello Dana")
+        after = (await orchestrator.load_record(s.id)).session
+        return fb, after
+    fb, after = run(go())
+    call = next(c for c in llm.calls if c["kind"] == "DeliveryFeedback")
+    assert fb.eye_contact == "good" and fb.tip
+    assert call["model"] == deps.lite_model()
+    assert call["images"][0][1] == "image/png" and call["images"][0][0].startswith(b"\x89PNG")
+    assert "Hello Dana" in call["prompt"]
+    assert len(after.turns) == 1  # nothing stored
+
+
+@pytest.mark.parametrize("image, status", [
+    ("not base64!!", 422),
+    ("data:image/gif;base64,R0lGODlh", 415),
+    ("", 422),
+])
+def test_delivery_rejects_bad_frames(llm, image, status):
+    async def go():
+        await seed()
+        s = await orchestrator.create_session("s1")
+        await orchestrator.delivery_feedback(s.id, image)
+    with pytest.raises(orchestrator.SessionError) as e:
+        run(go())
+    assert e.value.status == status
+
+
 # ---------- Opening line ----------
 
 def test_opening_line_is_verbatim_without_model_call(llm):
@@ -503,6 +544,8 @@ def test_http_session_flow_and_dashboard(llm):
     assert client.post(f"/api/sessions/{s['id']}/turns", json={"text": "  "}).status_code == 422
     pc = client.post(f"/api/sessions/{s['id']}/precheck", json={"text": "Can I guarantee it? No."})
     assert pc.status_code == 200 and "flags" in pc.json()
+    dv = client.post(f"/api/sessions/{s['id']}/delivery", json={"image": PNG_1PX, "text": "Hi"})
+    assert dv.status_code == 200 and dv.json()["eye_contact"] == "good"
 
     assert client.get(f"/api/sessions/{s['id']}/report").status_code == 404
     report = client.post(f"/api/sessions/{s['id']}/end").json()

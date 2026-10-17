@@ -20,18 +20,21 @@ import {
   Send,
   ShieldAlert,
   Target,
+  Video,
+  VideoOff,
   Volume2,
   VolumeX,
 } from 'lucide-react';
 import { api, errorMessage } from '@/lib/api';
-import type { CoachHint, ComplianceFlag, Persona, Scenario, Session, StateEventData, Turn } from '@/lib/types';
-import { speak, speechSynthesisSupported, stopSpeaking, useSpeechRecognition } from '@/lib/speech';
+import type { CoachHint, ComplianceFlag, DeliveryFeedback, Persona, Scenario, Session, StateEventData, Turn } from '@/lib/types';
+import { onSpeechActivity, speak, speechSynthesisSupported, stopSpeaking, useSpeechRecognition } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { Avatar, Badge, Button, Card, CitationList, DifficultyDots, ErrorState, LinkButton, Meter, Skeleton } from '@/components/ui';
 import { FlagList, HighlightedText, TurnBubble } from '@/components/transcript';
 import { useToast } from '@/components/toast';
 import { DemoGuide } from '@/components/demo-guide';
 import { CustomerAvatar } from '@/components/customer-avatar';
+import { DeliveryCard, SelfView, useSpeakingFlag, type SelfViewHandle } from '@/components/live-call';
 import { avatarModelUrl, moodFromMeters } from '@/lib/avatar';
 import { GenerationProgress, REPORT_NOTE, REPORT_STAGES } from '@/components/generation-progress';
 
@@ -98,6 +101,15 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
   const [endError, setEndError] = useState<string | null>(null);
   const [announce, setAnnounce] = useState('');
   const [showDemo, setShowDemo] = useState(demo);
+  // Live mode: camera on, hands-free voice turns, delivery feedback per turn.
+  const [live, setLive] = useState(false);
+  const [delivery, setDelivery] = useState<DeliveryFeedback | null>(null);
+  const [deliveryPending, setDeliveryPending] = useState(false);
+  const selfRef = useRef<SelfViewHandle>(null);
+  const liveRef = useRef(live);
+  liveRef.current = live;
+  const liveSubmitRef = useRef<(text: string) => void>(() => {});
+  const customerSpeaking = useSpeakingFlag(onSpeechActivity);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLOListElement>(null);
@@ -168,8 +180,11 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
 
   // ---------- Voice input ----------
   const draftBeforeSpeech = useRef('');
-  const stt = useSpeechRecognition(locale, (text) => {
-    setDraft(draftBeforeSpeech.current ? `${draftBeforeSpeech.current} ${text}` : text);
+  const stt = useSpeechRecognition(locale, (text, final) => {
+    const full = draftBeforeSpeech.current ? `${draftBeforeSpeech.current} ${text}` : text;
+    setDraft(full);
+    // Live mode: a finished utterance is sent straight away, like talking on a call.
+    if (final && liveRef.current && full.trim()) liveSubmitRef.current(full);
   });
   const toggleMic = () => {
     if (stt.listening) stt.stop();
@@ -356,15 +371,57 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
     void sendTurn(text);
   };
 
+  /** Live mode: grab one camera frame for delivery feedback, then send as usual. */
+  const liveSubmit = (text: string) => {
+    const frame = selfRef.current?.capture();
+    if (frame && text.trim() && !busy && !checking && status === 'active') {
+      setDeliveryPending(true);
+      api
+        .delivery(sessionId, frame, text.trim())
+        .then(setDelivery)
+        .catch(() => {})
+        .finally(() => setDeliveryPending(false));
+    }
+    void submit(text);
+  };
+  liveSubmitRef.current = liveSubmit;
+
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    void submit(draft);
+    if (live) liveSubmit(draft);
+    else void submit(draft);
   };
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
-      void submit(draft);
+      if (live) liveSubmit(draft);
+      else void submit(draft);
     }
+  };
+
+  // Live mode turn-taking: listen whenever it is the trainee's turn and the customer is not speaking.
+  const canListen = live && status === 'active' && !busy && !checking && !guard && !turnError && !customerSpeaking && ending === 'idle';
+  useEffect(() => {
+    if (!canListen || stt.listening || !stt.supported) return;
+    const t = setTimeout(() => {
+      draftBeforeSpeech.current = '';
+      setDraft('');
+      stt.start();
+    }, 700);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canListen, stt.listening, stt.supported, stt.start]);
+
+  const toggleLive = () => {
+    if (live) {
+      stt.stop();
+      setLive(false);
+      return;
+    }
+    if (!stt.supported) toast('error', 'Voice input needs Chrome or Edge. You can still type your replies on camera.');
+    setVoiceOut(true);
+    setDelivery(null);
+    setLive(true);
   };
 
   // ---------- End session ----------
@@ -445,6 +502,21 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
             <Badge tone="good">
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-600" /> Live
             </Badge>
+          )}
+          {status === 'active' && (
+            <button
+              type="button"
+              role="switch"
+              aria-checked={live}
+              onClick={toggleLive}
+              className={cn(
+                'inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-sm font-medium ring-1 ring-inset transition-colors',
+                live ? 'bg-rose-600 text-white ring-rose-600 hover:bg-rose-700' : 'bg-white text-slate-700 ring-slate-300 hover:bg-slate-50',
+              )}
+            >
+              {live ? <VideoOff className="h-4 w-4" aria-hidden /> : <Video className="h-4 w-4" aria-hidden />}
+              {live ? 'End live call' : 'Live call (camera + voice)'}
+            </button>
           )}
           {canSpeak && (
             <button
@@ -630,15 +702,39 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
 
         {/* Side panel */}
         <aside className="flex flex-col gap-4" aria-label="Session insights">
-          <Card className="overflow-hidden p-0">
+          <Card className="relative overflow-hidden p-0">
             <CustomerAvatar
               modelUrl={avatarModelUrl(persona)}
               name={persona.name}
               streaming={streamText !== null && !voiceOut}
               mood={moodFromMeters(meters.trust, meters.patience, meters.trust_delta)}
-              className="h-64 rounded-none"
+              className={cn('rounded-none', live ? 'h-80' : 'h-64')}
             />
+            {live && (
+              <>
+                <SelfView ref={selfRef} className="absolute bottom-3 right-3 h-24 w-32" onError={(m) => toast('error', m)} />
+                <span
+                  aria-live="polite"
+                  className={cn(
+                    'absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-white shadow',
+                    stt.listening ? 'bg-rose-600' : customerSpeaking || busy ? 'bg-slate-800/80' : 'bg-slate-600/80',
+                  )}
+                >
+                  {stt.listening ? <Mic className="h-3.5 w-3.5" aria-hidden /> : null}
+                  {stt.listening
+                    ? 'Listening… speak now'
+                    : customerSpeaking
+                      ? `${persona.name} is speaking`
+                      : busy || checking
+                        ? `${persona.name} is thinking`
+                        : guard
+                          ? 'Message held by the Compliance Guard'
+                          : 'Your turn'}
+                </span>
+              </>
+            )}
           </Card>
+          {live && <DeliveryCard feedback={delivery} pending={deliveryPending} />}
           {showDemo && (
             <DemoGuide
               traineeTurns={traineeTurns}

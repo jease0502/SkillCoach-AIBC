@@ -1,6 +1,7 @@
 import { parseSSE } from './sse';
 import { mockApi } from './mock/engine';
 import type {
+  DeliveryFeedback,
   ComplianceFlag,
   Dashboard,
   Document,
@@ -129,6 +130,9 @@ const httpApi = {
     }
     yield* parseSSE(res.body);
   },
+  /** Live mode: non-verbal delivery feedback on one camera frame (a JPEG data URL). */
+  delivery: (id: string, image: string, text: string) =>
+    request<DeliveryFeedback>(`/api/sessions/${id}/delivery`, json({ image, text })),
   endSession: (id: string) => request<Report>(`/api/sessions/${id}/end`, { method: 'POST' }),
   getReport: (id: string) => request<Report>(`/api/sessions/${id}/report`),
 

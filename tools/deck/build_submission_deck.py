@@ -329,7 +329,7 @@ def features_slide(s):
         ("Trust and patience meters", "The customer's state updates every turn, so trainees see the effect of their words."),
         ("Evidence-verified report", "Each score quotes the trainee's words. No verified evidence caps a skill at 50; a serious violation caps the total at 59."),
         ("Manager readiness view", "Team dashboard: ready-to-go-live count, weakest skills and top compliance violations."),
-        ("3D customer and voice", "A 3D customer that lip-syncs, blinks and shows its mood from the trust meter; speech input and spoken replies."),
+        ("Live video call", "Camera on, hands-free voice with a 3D customer that lip-syncs and shows its mood; Gemini reviews eye contact and expression."),
     ]
     w, h, gx, gy = 2.98, 1.12, 0.18, 0.14
     for i, (t, b) in enumerate(feats):
@@ -448,6 +448,7 @@ def technologies_slide(s):
         ("State: trust / patience", "3.5 Flash-Lite", "Deltas clamped; violations always cost trust"),
         ("Coach", "3.5 Flash-Lite", "One sentence with KB citations"),
         ("Report scorer", "Gemini 4 Argon", "Verbatim evidence or capped at 50; gate at 59"),
+        ("Delivery coach (live, vision)", "3.5 Flash-Lite", "One camera frame per turn, not stored; no comments on looks"),
     ]
     tw = 5.9
     tbl = s.shapes.add_table(len(rows), 3, Inches(X0), Inches(Y0), Inches(tw), Inches(3.4)).table
@@ -455,7 +456,7 @@ def technologies_slide(s):
     for j, wd in enumerate(widths):
         tbl.columns[j].width = Inches(wd)
     for i, row in enumerate(rows):
-        tbl.rows[i].height = Inches(0.36)
+        tbl.rows[i].height = Inches(0.34)
         for j, val in enumerate(row):
             cell = tbl.cell(i, j)
             cell.margin_left = cell.margin_right = Inches(0.06)
@@ -477,7 +478,7 @@ def technologies_slide(s):
     box(s, x, Y0, w, 3.8, fill=CARD)
     paras = [("How we use Google Cloud", {"size": 12, "bold": True})]
     for head, body in [
-        ("Gemini", "seven agent roles via Vertex AI (google-genai SDK), structured JSON output, streaming, embeddings."),
+        ("Gemini", "seven agent roles via Vertex AI (google-genai SDK), plus a vision check in live calls; structured JSON, streaming, embeddings."),
         ("Cloud Run", "two stateless services: Next.js web and FastAPI API, autoscaling, min 1 instance."),
         ("Firestore", "all state: documents, vector chunks, personas, scenarios, sessions, reports."),
         ("Firebase", "Hosting serves the public URL and rewrites traffic to Cloud Run."),
@@ -611,7 +612,7 @@ def performance_slide(s):
 def future_slide(s):
     set_title(s, "Additional details / future development")
     cols = [
-        ("Now (shipped)", True, ["Text practice with a 3D AI customer", "Browser voice: speech input, spoken replies",
+        ("Now (shipped)", True, ["Practice with a 3D AI customer", "Live call: camera, hands-free voice, delivery feedback",
                                  "Document-generated personas with citations and approval",
                                  "Multi-agent turns: guard, customer, grounding, state, coach",
                                  "Evidence-verified reports, manager readiness view"]),

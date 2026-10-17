@@ -240,22 +240,29 @@ def _config(*, model: str, system: str | None, temperature: float | None = None,
 
 async def generate_json(prompt: str, schema: type[T], *, system: str | None = None,
                         model: str | None = None, temperature: float = 0.4,
-                        thinking: Thinking = None) -> T:
+                        thinking: Thinking = None, images: list[tuple[bytes, str]] | None = None) -> T:
     """Generate a structured response validated against `schema`.
 
     model: a model id or a tier alias ("fast", "pro", "lite"); defaults to the fast tier.
         Failures fall back along the tier's chain (see `model_chain`).
     thinking: None / "default" keep the model's own setting; "off"|"minimal"|"low"|"medium"|"high"
         trade reasoning depth for latency.
+    images: optional (bytes, mime_type) pairs sent before the prompt (multimodal input).
     """
     s = get_settings()
     if s.llm_fake:
         return _fake_instance(schema)
 
+    contents: Any = prompt
+    if images:
+        from google.genai import types
+
+        contents = [types.Part.from_bytes(data=data, mime_type=mime) for data, mime in images] + [prompt]
+
     async def call(m: str) -> T:
         resp = await _client().aio.models.generate_content(
             model=m,
-            contents=prompt,
+            contents=contents,
             config=_config(model=m, system=system, temperature=temperature, schema=schema, thinking=thinking),
         )
         parsed = resp.parsed

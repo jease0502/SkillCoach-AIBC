@@ -9,7 +9,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.schemas import (
-    ComplianceFlag, Dashboard, DimensionAverage, Persona, Report, Scenario, Session, SessionSummary, ViolationCount,
+    ComplianceFlag, Dashboard, DeliveryFeedback, DimensionAverage, Persona, Report, Scenario, Session, SessionSummary, ViolationCount,
 )
 from app.session import deps, orchestrator
 from app.session.orchestrator import PERSONAS, REPORTS, SCENARIOS, SESSIONS, SessionError
@@ -80,6 +80,20 @@ async def precheck(session_id: str, body: TurnRequest) -> PrecheckResponse:
     """Compliance Guard: judge a draft before it is sent. Nothing is stored in the session."""
     try:
         return PrecheckResponse(flags=await orchestrator.precheck_compliance(session_id, body.text))
+    except SessionError as e:
+        raise _http(e)
+
+
+class DeliveryRequest(BaseModel):
+    image: str  # base64 JPEG or PNG, optionally as a data: URL
+    text: str = ""
+
+
+@router.post("/sessions/{session_id}/delivery", response_model=DeliveryFeedback)
+async def delivery(session_id: str, body: DeliveryRequest) -> DeliveryFeedback:
+    """Live mode: Gemini looks at one camera frame of the trainee. The frame is not stored."""
+    try:
+        return await orchestrator.delivery_feedback(session_id, body.image, body.text)
     except SessionError as e:
         raise _http(e)
 
