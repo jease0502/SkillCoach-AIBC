@@ -10,14 +10,23 @@ const OUT = path.join(MEDIA, 'deck');
 const finished = process.argv[2];
 const GUARANTEE = "Don't worry, this plan guarantees you 8% a year.";
 
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
+const args = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+  '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'];
+if (process.env.FAKE_CAMERA) args.push(`--use-file-for-fake-video-capture=${process.env.FAKE_CAMERA}`);
+const browser = await chromium.launch({ args });
+const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, permissions: ['camera', 'microphone'] });
+await context.addInitScript(() => {
+  class SilentRecognition { start() {} stop() { this.onend?.(); } abort() { this.onend?.(); } }
+  window.webkitSpeechRecognition = SilentRecognition;
+  window.SpeechRecognition = SilentRecognition;
+});
+const page = await context.newPage();
 page.setDefaultTimeout(120_000);
 
 async function avatarReady() {
-  await page.getByRole('img', { name: /3D avatar/ }).waitFor();
+  await page.getByRole('img', { name: /practice customer/ }).first().waitFor();
   await page.waitForFunction(() => !document.body.innerText.includes('Loading avatar'));
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(2500);
 }
 
 async function shot(name, url, prepare) {
@@ -64,5 +73,15 @@ await page.keyboard.press('Enter');
 await page.getByRole('button', { name: 'Send anyway' }).waitFor();
 await shot('practice_guard', null);
 console.log('guard session:', page.url().split('/').pop());
+
+// Live call with the sample camera feed: virtual background and expression cues.
+await page.getByRole('button', { name: 'Edit message' }).click();
+await input.fill('');
+await page.getByRole('switch', { name: /Live call/ }).click();
+await page.getByRole('img', { name: 'Your camera' }).waitFor();
+await page.getByRole('radio', { name: 'Branch' }).click();
+await page.waitForFunction(() => document.body.innerText.includes('Expression now'), null, { timeout: 90_000 }).catch(() => {});
+await page.waitForTimeout(2500);
+await shot('practice_live', null);
 
 await browser.close();

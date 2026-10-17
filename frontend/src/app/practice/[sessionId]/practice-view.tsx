@@ -25,7 +25,7 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import { api, errorMessage } from '@/lib/api';
+import { API_URL, MOCK, api, errorMessage } from '@/lib/api';
 import type { CoachHint, ComplianceFlag, DeliveryFeedback, Persona, Scenario, Session, StateEventData, Turn } from '@/lib/types';
 import { onSpeechActivity, speak, speechSynthesisSupported, stopSpeaking, useSpeechRecognition } from '@/lib/speech';
 import { cn } from '@/lib/utils';
@@ -36,7 +36,7 @@ import { DemoGuide } from '@/components/demo-guide';
 import { CustomerAvatar } from '@/components/customer-avatar';
 import { CameraPanel, DeliveryCard, SelfView, useSpeakingFlag, type SelfViewHandle } from '@/components/live-call';
 import { CueAccumulator, EMOTION_LABEL, type BackgroundMode, type CueSummary, type FaceCues } from '@/lib/face-vision';
-import { avatarBackdrop, avatarModelUrl, moodFromMeters, videoAvatarBase } from '@/lib/avatar';
+import { avatarBackdrop, avatarModelUrl, customerVoice, moodFromMeters, videoAvatarBase } from '@/lib/avatar';
 import { VideoAvatar } from '@/components/video-avatar';
 import { GenerationProgress, REPORT_NOTE, REPORT_STAGES } from '@/components/generation-progress';
 
@@ -97,7 +97,7 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
   const [locked, setLocked] = useState<string | null>(null);
 
   const [draft, setDraft] = useState('');
-  const [voiceOut, setVoiceOut] = useState(false);
+  const [voiceOut, setVoiceOut] = useState(true);
   const [canSpeak, setCanSpeak] = useState(false);
   const [ending, setEnding] = useState<'idle' | 'running' | 'failed'>('idle');
   const [endError, setEndError] = useState<string | null>(null);
@@ -134,8 +134,11 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
   const stickToBottom = useRef(true);
   const voiceOutRef = useRef(voiceOut);
   voiceOutRef.current = voiceOut;
+  // Natural Cloud TTS voice per customer; the mock build uses the browser voice.
+  const cloudVoiceRef = useRef<string | undefined>(undefined);
 
   const locale = persona?.locale || 'en-US';
+  cloudVoiceRef.current = persona && !MOCK ? customerVoice(persona) : undefined;
   const customerName = persona?.name ?? 'Customer';
 
   // ---------- Load ----------
@@ -271,7 +274,7 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
               // Post-check, meters and coach run concurrently; their events may arrive in any order.
               markStep(['grounding', 'state', 'coach'], 'running');
               setAnnounce(`${customerName} said: ${turn.text}`);
-              if (voiceOutRef.current) speak(turn.text, locale);
+              if (voiceOutRef.current) speak(turn.text, locale, cloudVoiceRef.current, API_URL);
               break;
             }
             case 'compliance_post': {
@@ -440,6 +443,9 @@ export function PracticeView({ sessionId, demo = false }: { sessionId: string; d
     setVoiceOut(true);
     setDelivery(null);
     setLive(true);
+    // Like joining a call: the customer greets you with their opening line.
+    const last = turns.at(-1);
+    if (last?.role === 'customer' && traineeTurns === 0) speak(last.text, locale, cloudVoiceRef.current, API_URL);
   };
 
   // ---------- End session ----------

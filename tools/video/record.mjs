@@ -8,7 +8,42 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
-import { API, FRAMES_DIR, HEIGHT, SITE, WIDTH, cueDurations, writeJson } from './paths.mjs';
+import { execFileSync } from 'node:child_process';
+import { API, BUILD, FRAMES_DIR, HEIGHT, SITE, WIDTH, cueDurations, writeJson } from './paths.mjs';
+
+// Character voices for the dialogue (Cloud Text-to-Speech, Chirp 3 HD), as in the app.
+const VOICES = { trainee: 'Despina', customer: 'Algenib' };
+const DIALOGUE_DIR = path.join(BUILD, 'dialogue');
+
+async function tts(text, voice, file) {
+  const token = process.env.GOOGLE_ACCESS_TOKEN;
+  const project = process.env.GOOGLE_CLOUD_PROJECT;
+  if (!token || !project) throw new Error('Set GOOGLE_ACCESS_TOKEN and GOOGLE_CLOUD_PROJECT for the dialogue voices');
+  const res = await fetch('https://texttospeech.googleapis.com/v1/text:synthesize', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'x-goog-user-project': project, 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify({
+      input: { text },
+      voice: { languageCode: 'en-US', name: `en-US-Chirp3-HD-${voice}` },
+      audioConfig: { audioEncoding: 'LINEAR16', sampleRateHertz: 24000 },
+    }),
+  });
+  if (!res.ok) throw new Error(`Text-to-Speech failed: ${res.status} ${await res.text()}`);
+  fs.writeFileSync(file, Buffer.from((await res.json()).audioContent, 'base64'));
+  return Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file], { encoding: 'utf8' }).trim());
+}
+
+/** The first sentence or two of a reply, so the dialogue stays short in the video. */
+function opening(text, max = 150) {
+  const sentences = text.match(/[^.!?]+[.!?]+["')]*\s*/g) ?? [text];
+  let out = '';
+  for (const sentence of sentences) {
+    if (out && (out + sentence).length > max) break;
+    out += sentence;
+    if (out.length >= 60) break;
+  }
+  return out.trim() || text.slice(0, max);
+}
 
 const ZOOM = 1.25;
 const TYPE_DELAY = 32; // ms per character
@@ -33,7 +68,21 @@ class Recorder {
     this.frames = [];
     this.marks = [];
     this.cuts = [];
+    this.dialogue = [];
     this.voiceEnd = 0;
+  }
+
+  /** Speak a line in a character voice now (after any narration), and hold the next cue until it ends. */
+  async say(role, text) {
+    await this.quiet();
+    fs.mkdirSync(DIALOGUE_DIR, { recursive: true });
+    const file = path.join(DIALOGUE_DIR, `d${String(this.dialogue.length).padStart(2, '0')}-${role}.wav`);
+    const dur = await tts(text, VOICES[role], file);
+    const t = now();
+    this.dialogue.push({ file, t, dur, role, text });
+    this.voiceEnd = t + dur + CUE_GAP;
+    console.log(`  ${role} says (${dur.toFixed(1)} s): ${text}`);
+    return dur;
   }
 
   async start() {
@@ -53,7 +102,7 @@ class Recorder {
   async stop() {
     await this.cdp.send('Page.stopScreencast').catch(() => {});
     await sleep(0.5);
-    writeJson(path.join(FRAMES_DIR, 'timeline.json'), { start: this.t0, end: now(), frames: this.frames, marks: this.marks, cuts: this.cuts });
+    writeJson(path.join(FRAMES_DIR, 'timeline.json'), { start: this.t0, end: now(), frames: this.frames, marks: this.marks, cuts: this.cuts, dialogue: this.dialogue });
     console.log(`recorded ${(now() - this.t0).toFixed(1)} s, ${this.frames.length} frames, ${this.cuts.length} cuts`);
   }
 
@@ -250,28 +299,24 @@ async function run() {
     personaId = page.url().split('/').pop();
     await rec.quiet(-0.4);
 
-    // ---------- Scenario: rules and rubric with sources ----------
-    await moveTo(page, page.getByRole('link', { name: 'Scenarios', exact: true }).first());
-    await moveTo(page, page.getByRole('link', { name: /^Edit Retirement/ }));
-    await page.getByRole('complementary', { name: 'Save and practice' }).waitFor();
-    await sleep(0.4);
-    await rec.cue('c06b_scenario');
-    await scrollBy(page, 620, 2.2);
-    await scrollBy(page, 620, 2.0);
-    await rec.quiet(-0.6);
-
     // ---------- Practice: scenario B ----------
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
     await sleep(0.6);
     await moveTo(page, page.getByRole('link', { name: 'Scenarios', exact: true }).first());
     await moveTo(page, page.getByRole('button', { name: /^Start practice: Retirement/ }));
     await page.waitForURL(/\/practice\//, { timeout: 60_000 });
+    const sessionId = page.url().split('/').pop();
+    const lastCustomerLine = async () => {
+      const s = await (await fetch(`${API}/api/sessions/${sessionId}`)).json();
+      return [...s.turns].reverse().find((t) => t.role === 'customer')?.text ?? '';
+    };
     const input = page.getByRole('textbox');
     await input.waitFor();
     await sleep(0.6);
     await rec.cue('c07_open');
+    await rec.say('customer', await lastCustomerLine());
     await moveTo(page, input);
-    await rec.quiet(-1.5);
+    await rec.say('trainee', LINES.guarantee);
     await input.pressSequentially(LINES.guarantee, { delay: TYPE_DELAY });
     await sleep(0.4);
     await page.keyboard.press('Enter');
@@ -285,23 +330,17 @@ async function run() {
     await rec.cue('c09_send_anyway');
     await moveTo(page, sendAnyway);
     await waitTurnDone(page);
+    await rec.say('customer', opening(await lastCustomerLine()));
     await moveTo(page, page.getByLabel('Coach hints, newest first'), { click: false });
     await rec.quiet(-0.8);
 
-    await moveTo(page, input);
-    await input.pressSequentially(LINES.pressure, { delay: TYPE_DELAY });
-    await page.keyboard.press('Enter');
-    if (await sendAnyway.isVisible({ timeout: 3000 }).catch(() => false)) await moveTo(page, sendAnyway);
-    await page.getByRole('list', { name: 'Compliance flags on this message' }).nth(1).waitFor({ timeout: 15_000 });
-    await rec.cue('c10_pressure');
-    await waitTurnDone(page);
-    await rec.quiet(-0.3);
-
     await rec.cue('c11_honest');
     await moveTo(page, input);
+    await rec.say('trainee', LINES.honest);
     await input.pressSequentially(LINES.honest, { delay: TYPE_DELAY - 8 });
     await page.keyboard.press('Enter');
     await waitTurnDone(page);
+    await rec.say('customer', opening(await lastCustomerLine()));
     const lastReply = page.locator('li[id^="turn-"]').last();
     const chip = lastReply.getByRole('list', { name: 'Sources' }).getByRole('button').first();
     if (await chip.count()) {
@@ -321,16 +360,18 @@ async function run() {
     await rec.quiet(-0.4);
 
     // The pipeline narration plays over a live turn, so the trace fills in on screen.
-    await rec.cue('c12_pipeline');
     await moveTo(page, input);
+    await rec.say('trainee', LINES.discovery);
     await input.pressSequentially(LINES.discovery, { delay: TYPE_DELAY - 8 });
     await page.keyboard.press('Enter');
+    await rec.cue('c12_pipeline');
     const pipeline = page.getByRole('heading', { name: 'Gemini pipeline, last turn' });
     // Center the trace card so the burned-in captions do not cover it.
     await pipeline.evaluate((h) => (h.closest('div.rounded-xl') ?? h).scrollIntoView({ block: 'center', behavior: 'smooth' }));
     await sleep(0.9);
     await moveTo(page, pipeline, { click: false, settle: 0 });
     await waitTurnDone(page);
+    await rec.say('customer', opening(await lastCustomerLine()));
     const deliveryCard = page.getByRole('heading', { name: 'Your delivery on camera' });
     await page.getByText(/Expression:/).waitFor({ timeout: 20_000 }).catch(() => {});
     await deliveryCard.evaluate((h) => (h.closest('div.rounded-xl') ?? h).scrollIntoView({ block: 'center', behavior: 'smooth' }));

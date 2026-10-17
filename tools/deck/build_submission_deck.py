@@ -539,7 +539,7 @@ def cost_slide(s):
 
 SNAPSHOT_PAGES = [
     ("Snapshots of the prototype: practice", [
-        ("practice_start", "A live call: Mr. Tan, animated with Veo, listens, talks and frowns as trust changes; the trainee's "
+        ("practice_live", "A live call: Mr. Tan, animated with Veo, listens, talks and frowns as trust changes; the trainee's "
                            "camera joins with a virtual background and on-device expression tracking."),
         ("practice_guard", "\"This plan guarantees you 8% a year\" is held before it is sent: the Guard quotes the "
                            "words, names rule CC-01, and offers Edit message or Send anyway."),

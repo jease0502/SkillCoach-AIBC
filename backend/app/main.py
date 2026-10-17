@@ -17,7 +17,7 @@ log = logging.getLogger("skillcoach")
 
 # Feature routers. Each is imported defensively so the API still boots while a
 # workstream is incomplete; a missing module is logged instead of crashing.
-ROUTER_MODULES = ("app.kb.routes", "app.builder.routes", "app.session.routes")
+ROUTER_MODULES = ("app.kb.routes", "app.builder.routes", "app.session.routes", "app.voice.routes")
 
 
 async def seed_if_empty() -> None:

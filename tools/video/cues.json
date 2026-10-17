@@ -28,10 +28,6 @@
       "text": "A trainer checks the sources and approves. Only approved customers are used for practice."
     },
     {
-      "id": "c06b_scenario",
-      "text": "Scenarios work the same way: every rule and rubric item points to a source."
-    },
-    {
       "id": "c07_open",
       "text": "Now a new insurance advisor meets Mr. Tan, a cautious retiree, on a video call. He is a lifelike customer made with Gemini and Veo. His first question is a trap."
     },
@@ -42,10 +38,6 @@
     {
       "id": "c09_send_anyway",
       "text": "Send it anyway, and trust drops. The coach suggests a way back."
-    },
-    {
-      "id": "c10_pressure",
-      "text": "Pressure selling is flagged inline too."
     },
     {
       "id": "c11_honest",
@@ -79,11 +71,6 @@
       "id": "c17_arch",
       "card": "arch",
       "text": "Under the hood, it's all Google Cloud. Firebase Hosting serves the app, and the web and API run on Cloud Run. Firestore stores documents, personas, sessions and reports. Gemini 4 Argon voices the customer, builds personas and writes the report; Flash-Lite runs the fast checks and the camera coach; Veo animates the customers."
-    },
-    {
-      "id": "c17b_future",
-      "card": "arch",
-      "text": "The future of work: a tireless practice partner for every new hire, built from the company's own knowledge."
     },
     {
       "id": "c18_end",

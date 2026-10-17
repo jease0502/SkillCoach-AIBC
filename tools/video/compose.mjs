@@ -45,7 +45,8 @@ const card = (name, cueId, tail) => ({ name, cueId, dur: LEAD_IN + durations[cue
 const title = card('title', 'c01_title', 0.9);
 // The architecture card carries two cues, with a short pause between them.
 const ARCH_GAP = 0.45;
-const arch = card('arch', 'c17_arch', ARCH_GAP + durations.c17b_future + 0.8);
+const hasFuture = byId.c17b_future && durations.c17b_future;
+const arch = card('arch', 'c17_arch', hasFuture ? ARCH_GAP + durations.c17b_future + 0.8 : 0.8);
 const endCard = card('end', 'c18_end', 2.6);
 for (const c of [title, arch, endCard]) {
   ffmpeg([
@@ -64,7 +65,7 @@ const placed = [
   { id: 'c01_title', at: LEAD_IN },
   ...timeline.marks.map((m) => ({ id: m.id, at: screenAt + toVideo(m.t) })),
   { id: 'c17_arch', at: archAt + LEAD_IN },
-  { id: 'c17b_future', at: archAt + LEAD_IN + durations.c17_arch + ARCH_GAP },
+  ...(hasFuture ? [{ id: 'c17b_future', at: archAt + LEAD_IN + durations.c17_arch + ARCH_GAP }] : []),
   { id: 'c18_end', at: endAt + LEAD_IN },
 ];
 
@@ -139,16 +140,19 @@ fs.writeFileSync(
 // ---------- Final mix ----------
 const inputs = ['-i', 'card-title.mp4', '-i', 'screen.mp4', '-i', 'card-arch.mp4', '-i', 'card-end.mp4'];
 const audio = [];
-placed.forEach((p, i) => {
-  inputs.push('-i', path.join(VO_DIR, `${p.id}.wav`));
-  const ms = Math.round(p.at * 1000);
+// Narration cues plus the characters' dialogue lines (recorded by record.mjs).
+const dialogue = (timeline.dialogue ?? []).map((d) => ({ file: d.file, at: screenAt + toVideo(d.t), dur: d.dur }));
+const sources = [...placed.map((p) => ({ file: path.join(VO_DIR, `${p.id}.wav`), at: p.at })), ...dialogue];
+sources.forEach((src, i) => {
+  inputs.push('-i', src.file);
+  const ms = Math.round(src.at * 1000);
   audio.push(`[${i + 4}:a]aresample=48000,aformat=channel_layouts=stereo,adelay=${ms}|${ms}[a${i}]`);
 });
 const filter = [
   '[0:v][1:v][2:v][3:v]concat=n=4:v=1:a=0[cat]',
   '[cat]subtitles=captions.ass[v]',
   ...audio,
-  `${placed.map((_, i) => `[a${i}]`).join('')}amix=inputs=${placed.length}:normalize=0:dropout_transition=0,apad,atrim=0:${total.toFixed(3)}[a]`,
+  `${sources.map((_, i) => `[a${i}]`).join('')}amix=inputs=${sources.length}:normalize=0:dropout_transition=0,apad,atrim=0:${total.toFixed(3)}[a]`,
 ].join(';');
 const out = path.join(MEDIA, 'demo.mp4');
 ffmpeg([

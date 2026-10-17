@@ -99,8 +99,47 @@ export function onSpeechActivity(fn: (a: SpeechActivity) => void): () => void {
   };
 }
 
-/** Speak text with the best available voice for the locale. */
-export function speak(text: string, lang = 'en-US') {
+let currentAudio: HTMLAudioElement | null = null;
+let speakToken = 0;
+
+/**
+ * Speak the customer's reply. With a Cloud voice (Chirp 3 HD, via the API's /api/tts) when
+ * `cloudVoice` is given; falls back to the browser voice if that fails.
+ */
+export function speak(text: string, lang = 'en-US', cloudVoice?: string, apiUrl?: string) {
+  stopSpeaking();
+  const token = ++speakToken;
+  if (cloudVoice && apiUrl && typeof window !== 'undefined') {
+    fetch(`${apiUrl}/api/tts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text.slice(0, 1200), voice: cloudVoice, language: lang.startsWith('en-') ? lang : 'en-US' }),
+    })
+      .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
+      .then((blob) => {
+        if (token !== speakToken) return;
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        currentAudio = audio;
+        audio.onplay = () => emitSpeech('start');
+        const done = () => {
+          URL.revokeObjectURL(url);
+          if (currentAudio === audio) currentAudio = null;
+          emitSpeech('end');
+        };
+        audio.onended = done;
+        audio.onerror = done;
+        return audio.play();
+      })
+      .catch(() => {
+        if (token === speakToken) browserSpeak(text, lang);
+      });
+    return;
+  }
+  browserSpeak(text, lang);
+}
+
+function browserSpeak(text: string, lang: string) {
   if (!speechSynthesisSupported()) return;
   const synth = window.speechSynthesis;
   synth.cancel();
@@ -119,7 +158,11 @@ export function speak(text: string, lang = 'en-US') {
 }
 
 export function stopSpeaking() {
-  if (!speechSynthesisSupported()) return;
-  window.speechSynthesis.cancel();
+  speakToken++;
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  if (speechSynthesisSupported()) window.speechSynthesis.cancel();
   emitSpeech('end');
 }

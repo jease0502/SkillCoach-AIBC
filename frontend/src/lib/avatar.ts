@@ -57,6 +57,21 @@ export function videoAvatarBase(p: Persona): string | null {
   return VIDEO_AVATARS.has(p.id) ? `/avatars/video/${p.id}` : null;
 }
 
+/** Chirp 3 HD voice for the customer (Cloud Text-to-Speech, see backend app/voice). */
+const VOICE_BY_ID: Record<string, string> = {
+  'persona-mr-tan': 'Algenib',
+  'persona-dana-kim': 'Kore',
+  'persona-alex-morgan': 'Puck',
+};
+
+export function customerVoice(p: Persona): string {
+  if (VOICE_BY_ID[p.id]) return VOICE_BY_ID[p.id];
+  const female = looksFemale(p);
+  const age = p.age ?? 40;
+  if (female) return age >= 55 ? 'Gacrux' : age < 33 ? 'Leda' : 'Kore';
+  return age >= 55 ? 'Algenib' : age < 33 ? 'Puck' : 'Charon';
+}
+
 export type AvatarMood = 'neutral' | 'happy' | 'relaxed' | 'angry' | 'sad' | 'surprised';
 
 /** Facial mood from the customer-state meters and the last change. */
