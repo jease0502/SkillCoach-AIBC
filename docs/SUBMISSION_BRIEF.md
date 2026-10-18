@@ -1,6 +1,22 @@
 # Submission brief
 
-Text for the "brief description" field of the AI Builder Cup form. About 250 words, so it fits common form limits.
+Text for the "brief description" field of the AI Builder Cup form. The form allows 1024 characters, so paste the short version; the long version below is for the README and the deck.
+
+## Short version (820 characters, for the form)
+
+```text
+SkillCoach is an AI role-play coach for customer-facing teams. New hires practise with lifelike AI customers built from the company's own manuals, a Compliance Guard stops risky promises before they are sent, a coach hints every turn, and the report quotes the trainee's words as evidence; one serious violation fails the session. Managers see who is ready.
+
+Google services:
+- Gemini on Vertex AI: 4 Argon voices the customer, builds cited personas and writes the report; 3.5 Flash-Lite runs the compliance, grounding, trust, coach and camera-delivery checks.
+- Veo 3.1 + Gemini image: fictional customers as looping video clips.
+- Cloud Text-to-Speech: a natural voice per customer.
+- Cloud Run: Next.js web and FastAPI API.
+- Firestore: all data.
+- Firebase Hosting and Authentication: public URL, sign-in and guests.
+```
+
+## Long version
 
 ---
 
